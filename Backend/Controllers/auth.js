@@ -1,0 +1,290 @@
+import User from "../Models/users.js";
+import Role from "../Models/roles.js";
+import ClientProfile from "../Models/client_profiles.js";
+import WorkerProfile from "../Models/worker_profiles.js";
+import ContractorProfile from "../Models/contractor_profiles.js";
+import UserRole from "../Models/user_roles.js";
+import Document from "../Models/documents.js";
+import bcrypt from "bcryptjs";
+import sequelize from "../Configs/config.js";
+import dotenv from "dotenv";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+} from "../Utils/generate_tokens.js";
+
+dotenv.config();
+
+export const register = async (req, res) => {
+  const t = await sequelize.transaction();
+
+  try {
+    const { full_name, email, phone_number, password, role } = req.body;
+
+    //  VALIDATION
+    if (!full_name || !email || !password || !role) {
+      throw new Error("All required fields must be provided");
+    }
+
+    if (phone_number && !/^\+?[1-9]\d{1,14}$/.test(phone_number)) {
+      throw new Error("Invalid phone number format");
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new Error("Invalid email format");
+    }
+
+    if (!["Admin", "Client", "Contractor", "Worker"].includes(role)) {
+      throw new Error("Invalid role specified");
+    }
+
+    const existingUser = await User.findOne({
+      where: { email },
+      transaction: t,
+    });
+    if (existingUser) throw new Error("Email already in use");
+
+    // if (phone_number) {
+    //   const existingPhone = await User.findOne({
+    //     where: { phone_number },
+    //     transaction: t,
+    //   });
+    //   if (existingPhone) throw new Error("Phone number already in use");
+    // }
+
+    //  CREATE USER
+    const password_hash = await bcrypt.hash(password, 10);
+
+    const user = await User.create(
+      {
+        full_name,
+        email,
+        phone_number,
+        password_hash,
+      },
+      { transaction: t },
+    );
+
+    // ROLE
+    const role_record = await Role.findOne({
+      where: { name: roleName },
+      transaction: t,
+    });
+
+    if (!role_record) throw new Error("Invalid role specified");
+
+    await UserRole.create(
+      {
+        user_id: newUser.user_id,
+        role_id: role_record.role_id,
+      },
+      { transaction: t },
+    );
+
+    
+    //  COMMIT
+    await t.commit();
+
+    return res.status(201).json({
+      success: true,
+      message: "User registered successfully",
+      user: {
+        user_id: user.user_id,
+        user_role: role_record.name,
+        full_name: user.full_name,
+        email: user.email,
+        phone_number: user.phone_number,
+      },
+    });
+  } catch (error) {
+    await t.rollback();
+
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+      user: null,
+    });
+  }
+};
+
+export const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ where: { email, status: "active" } });
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "User not found with this email, please register first",
+      });
+    }
+
+    const user_role = await UserRole.findOne({
+      where: { user_id: user.user_id },
+    });
+    const role = await Role.findOne({ where: { role_id: user_role.role_id } });
+
+    // if (role.name === "Client") {
+    //   const client_profile = await ClientProfile.findOne({
+    //     where: { user_id: user.user_id },
+    //   });
+
+    //   if (!client_profile) {
+    //     return res.status(404).json({
+    //       success: false,
+    //       message: "Client profile not found",
+    //     });
+    //   }
+
+    //   if (client_profile.verification_status !== "verified") {
+    //     return res.status(403).json({
+    //       success: false,
+    //       message:
+    //         "Your profile is not verified yet. Please wait for verification.",
+    //     });
+    //   }
+    // } else if (role.name === "Contractor") {
+    //   const contractor_profile = await ContractorProfile.findOne({
+    //     where: { user_id: user.user_id },
+    //   });
+
+    //   if (!contractor_profile) {
+    //     return res.status(404).json({
+    //       success: false,
+    //       message: "Contractor profile not found",
+    //     });
+    //   }
+
+    //   if (contractor_profile.verification_status !== "verified") {
+    //     return res.status(403).json({
+    //       success: false,
+    //       message:
+    //         "Your profile is not verified yet. Please wait for verification.",
+    //     });
+    //   }
+    // } else if (role.name === "Worker") {
+    //   const worker_profile = await WorkerProfile.findOne({
+    //     where: { user_id: user.user_id },
+    //   });
+
+    //   if (!worker_profile) {
+    //     return res.status(404).json({
+    //       success: false,
+    //       message: "Worker profile not found",
+    //     });
+    //   }
+
+    //   if (worker_profile.verification_status !== "verified") {
+    //     return res.status(403).json({
+    //       success: false,
+    //       message:
+    //         "Your profile is not verified yet. Please wait for verification.",
+    //     });
+    //   }
+    // }
+
+    const is_match = await bcrypt.compare(password, user.password_hash);
+    if (!is_match) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Incorrect password" });
+    }
+
+    // Payload for JWT (optional to include JWT now or after OTP verification)
+    const payload = {
+      id: user.user_id,
+      full_name: user.full_name,
+      phone_number: user.phone_number,
+      role: role.name,
+      email: user.email,
+    };
+
+    const accessToken = generateAccessToken(payload);
+    const refreshToken = generateRefreshToken(payload);
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "Strict" : "Lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Login successfully",
+      user_token: {
+        token: accessToken,
+      },
+      user: {
+        id: user.user_id,
+        role: role.name,
+        full_name: user.full_name,
+        email: user.email,
+        phone_number: user.phone_number,
+      },
+    });
+  } catch (error) {
+    return res
+      .status(400)
+      .json({ success: false, message: error.message, user: null });
+  }
+};
+
+export const admin_seed = async (req, res) => {
+  let t;
+
+  try {
+    t = await sequelize.transaction();
+
+    const email = "admin@gmail.com";
+    const password = "Admin@123";
+    const full_name = "Admin User";
+    const roleName = "Admin";
+
+    const existing_admin = await User.findOne({ where: { email } });
+    if (existing_admin)
+      throw new Error("Admin user already exists with this email");
+
+    const password_hash = await bcrypt.hash(password, 10);
+
+    const new_admin = await User.create(
+      {
+        full_name,
+        email,
+        password_hash,
+      },
+      { transaction: t },
+    );
+
+    const role_record = await Role.findOne({
+      where: { name: roleName },
+      transaction: t,
+    });
+
+    if (!role_record) throw new Error("Admin role not found");
+
+    await UserRole.create(
+      {
+        user_id: new_admin.user_id,
+        role_id: role_record.role_id,
+      },
+      { transaction: t },
+    );
+
+    await t.commit();
+
+    return res.status(201).json({
+      success: true,
+      message: "Admin user seeded successfully",
+      data: new_admin,
+    });
+  } catch (error) {
+    if (t) await t.rollback();
+
+    return res.status(500).json({
+      success: false,
+      message: "Admin seeding failed",
+      error: error.message,
+    });
+  }
+};
