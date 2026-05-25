@@ -21,7 +21,7 @@ const WorkerProfile = sequelize.define(
       onDelete: "CASCADE",
     },
     gender: {
-      type: DataTypes.ENUM("Male", "Female", "Other"),
+      type: DataTypes.ENUM("Male", "Female"),
       allowNull: false,
     },
     primary_skill: {

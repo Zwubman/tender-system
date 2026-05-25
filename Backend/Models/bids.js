@@ -3,6 +3,7 @@ import sequelize from "../Configs/config.js";
 import BidItem from "./bid_items.js";
 import BidSecurity from "./bid_securities.js";
 import TechnicalProposal from "./technical_proposals.js";
+import ContractorProfile from "./contractor_profiles.js";
 
 
 const Bid = sequelize.define(
@@ -44,6 +45,16 @@ const Bid = sequelize.define(
     timestamps: true,
   }
 );
+
+
+ContractorProfile.hasMany(Bid, {
+  foreignKey: "contractor_id",
+  onDelete: "CASCADE",
+});
+
+Bid.belongsTo(ContractorProfile, {
+  foreignKey: "contractor_id",
+});
 
 
 Bid.hasMany(BidItem, {
