@@ -1,6 +1,7 @@
 import express from "express";
 import sequelize from "./Configs/config.js";
 import dotenv from "dotenv";
+import cors from "cors";
 import "./Models/audit_logs.js";
 import "./Models/bid_items.js";
 import "./Models/bid_securities.js";
@@ -35,6 +36,14 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+app.use(
+  cors({
+    origin: "*",
+    credentials: true,
+    methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  })
+);
 
 // Use routes
 app.use("/auth", authRoutes);
