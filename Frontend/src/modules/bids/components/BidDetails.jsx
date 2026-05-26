@@ -12,62 +12,50 @@ import {
   Row,
   Col,
   Form,
+  Modal,
 } from "react-bootstrap";
 
 // import the useAuth hook
-import { useAuth }
-from "../../../context/AuthContext";
+import { useAuth } from "../../../context/AuthContext";
 
 // import the bidService
 import bidService from "../bidService.js";
-
 export default function BidDetails() {
-
   const { bidId } = useParams();
 
   const [bid, setBid] = useState(null);
 
-  const [dataLoading, setDataLoading]
-    = useState(true);
+  const [dataLoading, setDataLoading] = useState(true);
 
-  const [error, setError]
-    = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
 
-  const [selectionReason,
-    setSelectionReason]
+  const [error, setError] = useState("");
 
-    = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const [selectionReason, setSelectionReason] = useState("");
+
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   // auth
-  const { user, loading }
-    = useAuth();
+  const { user, loading } = useAuth();
 
-  let loggedInUserToken =
-    !loading ? user?.token : null;
+  let loggedInUserToken = !loading ? user?.token : null;
 
-  let userRole =
-    !loading ? user?.user_role : null;
+  let userRole = !loading ? user?.user_role : null;
 
   // role checking
-  const isClient =
-    userRole === "client";
+  const isClient = userRole === "client";
 
-  const isContractor =
-    userRole === "contractor";
+  const isContractor = userRole === "contractor";
 
   // contractor always sees own
   // financial proposal
-  const canViewFinancial =
-
-    isContractor ||
-
-    bid?.financial_visible;
+  const canViewFinancial = isContractor || bid?.financial_visible;
 
   // status badge color
   const getStatusVariant = () => {
-
     switch (bid?.status) {
-
       case "accepted":
         return "success";
 
@@ -82,66 +70,88 @@ export default function BidDetails() {
     }
   };
 
-  // fetch data
+  // =========================
+  // fetch bid details
+  // =========================
+
   useEffect(() => {
-
-    const fetchBidDetails =
-      async () => {
-
+    const fetchBidDetails = async () => {
       try {
+        const res = await bidService.fetchBidDetail(bidId, loggedInUserToken);
 
-        const res =
-          await bidService
-            .fetchBidDetail(
-              bidId,
-              loggedInUserToken
-            );
-
-        const data =
-          await res.json();
+        const data = await res.json();
 
         if (res.ok) {
-
           setBid(data.bid);
-
         } else {
-
           setError(data.message);
         }
-
       } catch (error) {
-
         console.error(error);
 
-        setError(
-          "Failed to load bid details"
-        );
-
+        setError("Failed to load bid details");
       } finally {
-
         setDataLoading(false);
       }
     };
 
     if (loggedInUserToken) {
-
       fetchBidDetails();
     }
-
   }, [bidId, loggedInUserToken]);
+
+  // =========================
+  // select contractor
+  // =========================
+
+  const handleSelectContractor = async () => {
+    try {
+      setActionLoading(true);
+
+      setError("");
+
+      const res = await bidService.selectWinningBid(
+        bid.bid_id,
+
+        {
+          selection_reason: selectionReason,
+        },
+
+        loggedInUserToken,
+      );
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setBid({
+          ...bid,
+
+          status: "accepted",
+        });
+
+        setSuccessMessage("Contractor selected successfully");
+
+        setShowConfirmModal(false);
+      } else {
+        setError(data.message || "Failed");
+      }
+    } catch (error) {
+      console.error(error);
+
+      setError("Server error");
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   // =========================
   // loading
   // =========================
 
   if (loading || dataLoading) {
-
     return (
-
       <div className="text-center mt-5">
-
         <Spinner animation="border" />
-
       </div>
     );
   }
@@ -151,15 +161,7 @@ export default function BidDetails() {
   // =========================
 
   if (error) {
-
-    return (
-
-      <Alert variant="danger">
-
-        {error}
-
-      </Alert>
-    );
+    return <Alert variant="danger">{error}</Alert>;
   }
 
   // =========================
@@ -167,15 +169,7 @@ export default function BidDetails() {
   // =========================
 
   if (!bid) {
-
-    return (
-
-      <Alert variant="warning">
-
-        Bid not found
-
-      </Alert>
-    );
+    return <Alert variant="warning">Bid not found</Alert>;
   }
 
   // =========================
@@ -183,9 +177,7 @@ export default function BidDetails() {
   // =========================
 
   return (
-
     <div>
-
       {/* header */}
       <div
         className="
@@ -195,91 +187,46 @@ export default function BidDetails() {
           mb-4
         "
       >
+        <h2>Bid Details</h2>
 
-        <h2>
-
-          Bid Details
-
-        </h2>
-
-        <Badge
-          bg={getStatusVariant()}
-          className="fs-6"
-        >
-
+        <Badge bg={getStatusVariant()} className="fs-6">
           {bid.status}
-
         </Badge>
-
       </div>
 
-      <Row>
+      {/* success message */}
+      {successMessage && <Alert variant="success">{successMessage}</Alert>}
 
+      <Row>
         {/* left side */}
         <Col lg={8}>
-
           {/* contractor info */}
-          {
-            isClient && (
-
-              <Card
-                className="
+          {isClient && (
+            <Card
+              className="
                   shadow-sm
                   mb-4
                 "
-              >
+            >
+              <Card.Body>
+                <h4>Contractor Information</h4>
 
-                <Card.Body>
+                <hr />
 
-                  <h4>
+                <p>
+                  <strong>Company:</strong> {bid.contractor_name}
+                </p>
 
-                    Contractor Information
+                <p>
+                  <strong>Email:</strong> {bid.contractor_email}
+                </p>
 
-                  </h4>
-
-                  <hr />
-
-                  <p>
-
-                    <strong>
-                      Company:
-                    </strong>
-
-                    {" "}
-
-                    {bid.contractor_name}
-
-                  </p>
-
-                  <p>
-
-                    <strong>
-                      Email:
-                    </strong>
-
-                    {" "}
-
-                    {bid.contractor_email}
-
-                  </p>
-
-                  <p>
-
-                    <strong>
-                      Phone:
-                    </strong>
-
-                    {" "}
-
-                    {bid.contractor_phone}
-
-                  </p>
-
-                </Card.Body>
-
-              </Card>
-            )
-          }
+                <p>
+                  <strong>Phone:</strong> {bid.contractor_phone}
+                </p>
+              </Card.Body>
+            </Card>
+          )}
 
           {/* technical proposal */}
           <Card
@@ -288,100 +235,40 @@ export default function BidDetails() {
               mb-4
             "
           >
-
             <Card.Body>
-
-              <h4>
-
-                Technical Proposal
-
-              </h4>
+              <h4>Technical Proposal</h4>
 
               <hr />
 
               <p>
+                <strong>Method Description:</strong>
+              </p>
 
-                <strong>
-                  Method Description:
-                </strong>
+              <p>{bid.technical_proposal.method_description}</p>
 
+              <p>
+                <strong>Duration:</strong>{" "}
+                {bid.technical_proposal.duration_days} days
               </p>
 
               <p>
-
-                {
-                  bid.technical_proposal
-                    .method_description
-                }
-
+                <strong>Team Size:</strong> {bid.technical_proposal.team_size}
               </p>
 
               <p>
-
-                <strong>
-                  Duration:
-                </strong>
-
-                {" "}
-
-                {
-                  bid.technical_proposal
-                    .duration_days
-                }
-
-                {" "}days
-
-              </p>
-
-              <p>
-
-                <strong>
-                  Team Size:
-                </strong>
-
-                {" "}
-
-                {
-                  bid.technical_proposal
-                    .team_size
-                }
-
-              </p>
-
-              <p>
-
-                <strong>
-                  Equipment:
-                </strong>
-
-                {" "}
-
-                {
-                  bid.technical_proposal
-                    .equipment
-                }
-
+                <strong>Equipment:</strong> {bid.technical_proposal.equipment}
               </p>
 
               <div className="mt-3">
-
                 <Button
                   variant="outline-primary"
                   target="_blank"
-                  href={
-                    bid.technical_proposal
-                      .document_url
-                  }
+                  href={bid.technical_proposal.document_url}
                 >
-
                   View Technical Document
-
                 </Button>
-
               </div>
-
             </Card.Body>
-
           </Card>
 
           {/* bid security */}
@@ -391,369 +278,215 @@ export default function BidDetails() {
               mb-4
             "
           >
-
             <Card.Body>
-
-              <h4>
-
-                Bid Security
-
-              </h4>
+              <h4>Bid Security</h4>
 
               <hr />
 
               <p>
-
-                <strong>
-                  Bank Name:
-                </strong>
-
-                {" "}
-
-                {
-                  bid.bid_security
-                    .bank_name
-                }
-
+                <strong>Bank Name:</strong> {bid.bid_security.bank_name}
               </p>
 
               <p>
-
-                <strong>
-                  Guarantee Number:
-                </strong>
-
-                {" "}
-
-                {
-                  bid.bid_security
-                    .guarantee_number
-                }
-
+                <strong>Guarantee Number:</strong>{" "}
+                {bid.bid_security.guarantee_number}
               </p>
 
               <p>
-
-                <strong>
-                  Amount:
-                </strong>
-
-                {" "}
-
-                {
-                  bid.bid_security
-                    .amount
-                }
-
+                <strong>Amount:</strong> {bid.bid_security.amount}
               </p>
 
               <p>
-
-                <strong>
-                  Issue Date:
-                </strong>
-
-                {" "}
-
-                {
-                  bid.bid_security
-                    .issue_date
-                }
-
+                <strong>Issue Date:</strong> {bid.bid_security.issue_date}
               </p>
 
               <p>
-
-                <strong>
-                  Expiry Date:
-                </strong>
-
-                {" "}
-
-                {
-                  bid.bid_security
-                    .expiry_date
-                }
-
+                <strong>Expiry Date:</strong> {bid.bid_security.expiry_date}
               </p>
 
               <p>
-
-                <strong>
-                  Verification:
-                </strong>
-
-                {" "}
-
+                <strong>Verification:</strong>{" "}
                 <Badge bg="warning">
-
-                  {
-                    bid.bid_security
-                      .verification_status
-                  }
-
+                  {bid.bid_security.verification_status}
                 </Badge>
-
               </p>
 
               <div className="mt-3">
-
                 <Button
                   variant="outline-success"
                   target="_blank"
-                  href={
-                    bid.bid_security
-                      .document_url
-                  }
+                  href={bid.bid_security.document_url}
                 >
-
                   View Bank Guarantee
-
                 </Button>
-
               </div>
-
             </Card.Body>
-
           </Card>
 
           {/* financial proposal */}
           <Card className="shadow-sm">
-
             <Card.Body>
-
-              <h4>
-
-                Financial Proposal
-
-              </h4>
+              <h4>Financial Proposal</h4>
 
               <hr />
 
-              {
-                !canViewFinancial ? (
-
-                  <Card
-                    className="
+              {!canViewFinancial ? (
+                <Card
+                  className="
                       border-0
                       bg-light
                     "
-                  >
+                >
+                  <Card.Body>
+                    <h5>Financial Proposal Locked</h5>
 
-                    <Card.Body>
-
-                      <h5>
-
-                        Financial Proposal Locked
-
-                      </h5>
-
-                      <p
-                        className="
+                    <p
+                      className="
                           text-muted
                           mb-0
                         "
-                      >
-
-                        Financial proposal
-                        will become visible
-                        after the tender
-                        submission deadline.
-
-                      </p>
-
-                    </Card.Body>
-
-                  </Card>
-
-                ) : (
-
-                  <>
-
-                    <Table
-                      bordered
-                      hover
-                      responsive
                     >
+                      Financial proposal will become visible after the tender
+                      submission deadline.
+                    </p>
+                  </Card.Body>
+                </Card>
+              ) : (
+                <>
+                  <Table bordered hover responsive>
+                    <thead>
+                      <tr>
+                        <th>#</th>
 
-                      <thead>
+                        <th>Description</th>
 
-                        <tr>
+                        <th>Unit Price</th>
 
-                          <th>#</th>
+                        <th>Total Price</th>
+                      </tr>
+                    </thead>
 
-                          <th>
-                            Description
-                          </th>
+                    <tbody>
+                      {bid.financial_proposal.map((item) => (
+                        <tr key={item.bid_item_id}>
+                          <td>{item.item_no}</td>
 
-                          <th>
-                            Unit Price
-                          </th>
+                          <td>{item.description}</td>
 
-                          <th>
-                            Total Price
-                          </th>
+                          <td>{item.unit_price}</td>
 
+                          <td>{item.total_price}</td>
                         </tr>
+                      ))}
+                    </tbody>
+                  </Table>
 
-                      </thead>
-
-                      <tbody>
-
-                        {
-                          bid.financial_proposal
-                            .map((item) => (
-
-                            <tr
-                              key={
-                                item.bid_item_id
-                              }
-                            >
-
-                              <td>
-
-                                {item.item_no}
-
-                              </td>
-
-                              <td>
-
-                                {
-                                  item.description
-                                }
-
-                              </td>
-
-                              <td>
-
-                                {
-                                  item.unit_price
-                                }
-
-                              </td>
-
-                              <td>
-
-                                {
-                                  item.total_price
-                                }
-
-                              </td>
-
-                            </tr>
-                          ))
-                        }
-
-                      </tbody>
-
-                    </Table>
-
-                    {/* total amount */}
-                    <div
-                      className="
+                  {/* total amount */}
+                  <div
+                    className="
                         text-end
                         mt-3
                       "
-                    >
-
-                      <h5>
-
-                        Total Bid Amount:
-
-                        <Badge
-                          bg="dark"
-                          className="ms-2"
-                        >
-
-                          {
-                            bid.total_bid_amount
-                          }
-
-                        </Badge>
-
-                      </h5>
-
-                    </div>
-
-                  </>
-                )
-              }
-
+                  >
+                    <h5>
+                      Total Bid Amount:
+                      <Badge bg="dark" className="ms-2">
+                        {bid.total_bid_amount}
+                      </Badge>
+                    </h5>
+                  </div>
+                </>
+              )}
             </Card.Body>
-
           </Card>
-
         </Col>
 
         {/* right side */}
         <Col lg={4}>
-
           {/* evaluation */}
-          {
-            isClient &&
-            bid.financial_visible && (
+          {isClient && bid.financial_visible && (
+            <Card className="shadow-sm">
+              <Card.Body>
+                <h4>Evaluation</h4>
 
-              <Card className="shadow-sm">
+                <hr />
 
-                <Card.Body>
+                <Form
+                  style={{
+                    pointerEvents: bid.status === "accepted" ? "none" : "auto",
 
-                  <h4>
+                    opacity: bid.status === "accepted" ? 0.6 : 1,
+                  }}
+                >
+                  <Form.Group className="mb-3">
+                    <Form.Label>Selection Reason</Form.Label>
 
-                    Evaluation
+                    <Form.Control
+                      as="textarea"
+                      rows={5}
+                      value={selectionReason}
+                      onChange={(e) => setSelectionReason(e.target.value)}
+                    />
+                  </Form.Group>
 
-                  </h4>
-
-                  <hr />
-
-                  <Form>
-
-                    <Form.Group
-                      className="mb-3"
-                    >
-
-                      <Form.Label>
-
-                        Selection Reason
-
-                      </Form.Label>
-
-                      <Form.Control
-                        as="textarea"
-                        rows={5}
-                        value={
-                          selectionReason
-                        }
-                        onChange={(e) =>
-
-                          setSelectionReason(
-                            e.target.value
-                          )
-                        }
-                      />
-
-                    </Form.Group>
-
-                    <Button
-                      variant="success"
-                      className="w-100"
-                    >
-
-                      Select Contractor
-
-                    </Button>
-
-                  </Form>
-
-                </Card.Body>
-
-              </Card>
-            )
-          }
-
+                  <Button
+                    variant="success"
+                    className="w-100"
+                    disabled={bid.status === "accepted"}
+                    onClick={() => setShowConfirmModal(true)}
+                  >
+                    {bid.status === "accepted"
+                      ? "Contractor Selected"
+                      : "Select Contractor"}
+                  </Button>
+                </Form>
+              </Card.Body>
+            </Card>
+          )}
         </Col>
-
       </Row>
 
+      {/* confirmation modal */}
+      <Modal
+        show={showConfirmModal}
+        onHide={() => setShowConfirmModal(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Contractor Selection</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          <p>Are you sure you want to award this tender to this contractor?</p>
+
+          <hr />
+
+          <p>
+            <strong>Contractor:</strong> {bid.contractor_name}
+          </p>
+
+          <p className="mb-0">
+            <strong>Total Bid Amount:</strong> {bid.total_bid_amount}
+          </p>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowConfirmModal(false)}
+          >
+            Cancel
+          </Button>
+
+          <Button
+            variant="success"
+            onClick={handleSelectContractor}
+            disabled={actionLoading}
+          >
+            {actionLoading ? "Selecting..." : "Confirm Selection"}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }

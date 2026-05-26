@@ -7,63 +7,71 @@ const fetchBids = async (tenderId, loggedInUserToken) => {
       Authorization: `Bearer ${loggedInUserToken}`,
     },
   };
- const response = await apiFetch(`/tenders/${tenderId}/bids`, requestOptions);
+  const response = await apiFetch(`/tenders/${tenderId}/bids`, requestOptions);
 
- return response;
+  return response;
 };
 
 // A frontend service function to fetch the detailed data of the specific bid which submitted to the tender
-const fetchBidDetail = async (bidId, loggedInUserToken)=>{
-    const requestOptions = {
+const fetchBidDetail = async (bidId, loggedInUserToken) => {
+  const requestOptions = {
     headers: {
       Authorization: `Bearer ${loggedInUserToken}`,
     },
   };
 
- const response = await apiFetch(`bids/${bidId}`, requestOptions);
+  const response = await apiFetch(`bids/${bidId}`, requestOptions);
 
- return response;
-}
+  return response;
+};
 // the frontend service function that send request to submit bid for the specific tender
-const submitBid = async (
-  tenderId,
-  formData, loggedInUserToken
-) => {
-    const requestOptions ={
-        method: "POST",
-        headers: {
+const submitBid = async (tenderId, formData, loggedInUserToken) => {
+  const requestOptions = {
+    method: "POST",
+    headers: {
       Authorization: `Bearer ${loggedInUserToken}`,
     },
-        body: formData,
-    }
+    body: formData,
+  };
 
-  const response= await apiFetch(
-
-    `/tenders/${tenderId}/bids`, requestOptions
-  );
+  const response = await apiFetch(`/tenders/${tenderId}/bids`, requestOptions);
   return response;
 };
 // the frontend service function that send the request to retrive bids of the contractior
-const getMyBids = async (loggedInUserToken, contrdctorId) =>{
-const requestOptions ={
-    headers:{
-       Authorization: `Bearer ${loggedInUserToken}`,  
+const getMyBids = async (loggedInUserToken, contrdctorId) => {
+  const requestOptions = {
+    headers: {
+      Authorization: `Bearer ${loggedInUserToken}`,
     },
-};
- const response= await apiFetch(
-
-    `/bids?contractor_id=${contrdctorId}`, requestOptions
+  };
+  const response = await apiFetch(
+    `/bids?contractor_id=${contrdctorId}`,
+    requestOptions,
   );
-  
-  return response;
 
-}
+  return response;
+};
+// the frontend service function that send the request to select the winning bids(contractor)
+const selectWinningBid = async (bidId, selectionData, loggedInUserToken) => {
+  const requestOpetions = {
+    method: "PATCH",
+
+    headers: {
+      Authorization: `Bearer ${loggedInUserToken}`,
+    },
+
+    body: JSON.stringify(selectionData),
+  };
+
+  const response = await apiFetch(`/bids/${bidId}/select`, requestOpetions);
+  return response;
+};
 //  export all the function
-const bidService ={
-    fetchBids,
-    fetchBidDetail,
-     submitBid,
-     getMyBids,
+const bidService = {
+  fetchBids,
+  fetchBidDetail,
+  submitBid,
+  getMyBids,
+  selectWinningBid,
 };
 export default bidService;
-

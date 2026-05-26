@@ -1,108 +1,120 @@
 import React from "react";
+import { Container, Row, Col, Card, Table, Button } from "react-bootstrap";
+import { FaFolderOpen, FaEnvelope, FaAward, FaPlus } from "react-icons/fa";
+import "bootstrap/dist/css/bootstrap.min.css";
 
-function Client_dashboard() {
-  return <div>
-   Statement of the Problem
-The current manual warehouse management system faces several operational and technical
-challenges:
-1. Human Errors in Data Entry:
-Manual recording of inventory transactions often leads to inaccurate stock data.
-2. Time-Consuming Processes:
-Physical stock counting and manual documentation slow down warehouse operations.
-3. Lack of Real-Time Updates:
-Stock levels are not updated immediately after sales or shipments, leading to confusion,
-shortages, or over-selling.
-4. No Automated Low-Stock Alerts:
-Employees must manually monitor inventory levels, increasing the risk of stockouts.
-5. Inefficient Supplier Coordination:
-Reordering items requires phone calls or emails, delaying restocking processes.
-6. Limited Accountability and Transparency:
-It is difficult to track who performed specific operations due to lack of activity logging.
-7. Poor Reporting Mechanism:
-Reports are prepared manually, consuming significant time and effort.
-These limitations reduce operational efficiency, increase costs, and affect decision-making.
-Therefore, there is a need for an automated, secure, and real-time warehouse tracking system.
-3. Objectives of the Project
-3.1 General Objective
-To design and develop a Warehouse Tracking Management System that automates inventory
-management, enhances real-time stock monitoring, and improves supplier coordination.
-3.2 Specific Objectives
-The project aims to:
- Automate recording of inbound and outbound inventory movements
- Maintain real-time stock level updates
- Automatically deduct stock when customer orders are processed
- Implement a low-stock alert mechanism based on predefined thresholds
- Enable automated digital restock requests to suppliers
- Develop a supplier management module
- Implement role-based user authentication and activity tracking
- Generate analytical reports on stock movement, sales, and supplier performance Ensure secure data storage and backup
-4. Significance of the Project
-The Warehouse Tracking Management System provides multiple benefits to organizations:
-4.1 Operational Significance
- Improves inventory accuracy by reducing human errors
- Eliminates repetitive manual tasks
- Enhances productivity through automation
-4.2 Managerial Significance
- Provides real-time visibility into stock levels
- Supports faster and data-driven decision-making
- Improves accountability through activity tracking
-4.3 Financial Significance
- Reduces losses caused by stockouts or overstocking
- Minimizes operational costs associated with manual processes
- Improves supplier response time and inventory turnover
-4.4 Technological Significance
- Promotes digital transformation in warehouse management
- Provides a scalable system capable of supporting multiple warehouses
- Ensures secure and structured data management
-Conclusion
-The proposed Warehouse Tracking Management System (WTMS) replaces traditional manual
-processes with an intelligent, automated, and real-time digital solution. By integrating inventory
-tracking, supplier communication, user management, and analytical reporting into a centralized
-system, WTMS enhances efficiency, transparency, and operational control. The system offers a
-scalable and future-ready approach to modern warehouse management and supply chain
-optimization.Project Title 3: Smart Garage Service Management System
-1. Introduction
-The rapid growth of vehicle ownership has increased the demand for efficient and organized
-garage service management systems. Traditional garages often rely on manual record-keeping
-methods, which lead to poor service tracking, data loss, delayed communication, and customer
-dissatisfaction. To address these challenges, this project proposes the development of My
-Garage – Smart Garage Service Management System, a web-based platform designed to
-digitize and automate garage service operations.
-The system will allow customers to request services online, administrators to manage operations,
-mechanics to receive assigned tasks, and collectors to manage payments. The platform will
-ensure better workflow management, transparency, and improved customer experience.
-2. Statement of the Problem
-Many garages currently operate using manual systems such as notebooks or basic spreadsheets to
-record customer information, service history, and payments. These methods create several
-problems:
- Difficulty in tracking ongoing and completed services
- Miscommunication between mechanics, administrators, and customers
- Lack of proper reporting and data analysis
- Data redundancy and errors
- No real-time service status updates for customers
-Because of these limitations, garage operations become inefficient, time-consuming, and prone
-to mistakes. Therefore, there is a need for an integrated digital system that manages all garage
-activities in a centralized and automated way.
-3. Objectives
-3.1 General Objective
-To design and develop a web-based Garage Service Management System that automates service
-booking, task assignment, payment tracking, and reporting.
-3.2 Specific Objectives
- To develop a role-based authentication system (Admin, Mechanic, Collector, Customer)
- To allow customers to request and track services online
- To enable administrators to assign tasks to mechanics To allow mechanics to update service progress status
- To enable collectors to record and manage payments
- To generate reports on daily, weekly, and monthly garage activities
- To maintain secure and structured data storage
-4. Significance of the Project
-This project will provide significant benefits to garage owners, employees, and customers:
- Improved Efficiency: Automates manual processes and reduces paperwork
- Better Communication: Enables real-time updates between staff and customers
- Data Accuracy: Minimizes human errors in recording and reporting
- Time Saving: Speeds up service booking and task assignment
- Customer Satisfaction: Customers can track service status transparently
- Business Growth: Helps garage owners analyze data for better decision-making
-  </div>;
-}
+const Client_dashboard = () => {
+  // Sample data from your mockup
+  const tenders = [
+    { id: 1, title: "Road Construction", status: "Open", bids: 8 },
+    { id: 2, title: "Office Renovation", status: "Evaluated", bids: 4 },
+  ];
+
+  return (
+    <Container fluid className="p-4 bg-light flex-grow-1">
+      {/* 1. STATS METRICS ROW */}
+      <Row className="g-3 mb-5">
+        {/* Active Tenders */}
+        <Col md={4}>
+          <Card
+            className="text-white border-0 text-center py-4"
+            style={{ backgroundColor: "#1d528f", borderRadius: "10px" }}
+          >
+            <Card.Body className="d-flex flex-column align-items-center justify-content-center p-2">
+              <span className="fw-bold mb-2">Active Tenders: 5</span>
+              <FaFolderOpen size={22} className="opacity-75" />
+            </Card.Body>
+          </Card>
+        </Col>
+
+        {/* Bids Received */}
+        <Col md={4}>
+          <Card
+            className="text-white border-0 text-center py-4"
+            style={{ backgroundColor: "#2e7d32", borderRadius: "10px" }}
+          >
+            <Card.Body className="d-flex flex-column align-items-center justify-content-center p-2">
+              <span className="fw-bold mb-2">Bids Received: 12</span>
+              <FaEnvelope size={22} className="opacity-75" />
+            </Card.Body>
+          </Card>
+        </Col>
+
+        {/* Tenders Evaluated */}
+        <Col md={4}>
+          <Card
+            className="text-white border-0 text-center py-4"
+            style={{ backgroundColor: "#c65115", borderRadius: "10px" }}
+          >
+            <Card.Body className="d-flex flex-column align-items-center justify-content-center p-2">
+              <span className="fw-bold mb-2">Tenders Evaluated: 3</span>
+              <FaAward size={22} className="opacity-75" />
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* 2. TABLE ACTIONS HEADER */}
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h5 className="fw-bold m-0 text-dark">My Tenders</h5>
+        <Button
+          className="d-flex align-items-center gap-2 border-0 px-3 py-2 text-white shadow-sm"
+          style={{
+            backgroundColor: "#1d528f",
+            fontSize: "14px",
+            fontWeight: "500",
+          }}
+        >
+          <FaPlus size={12} /> Add New Tender
+        </Button>
+      </div>
+
+      {/* 3. DATA TABLE CONTAINER */}
+      <Card
+        className="border border-light-subtle shadow-sm overflow-hidden"
+        style={{ borderRadius: "10px" }}
+      >
+        <Table responsive hover className="m-0 align-middle">
+          <thead className="table-light">
+            <tr className="text-secondary" style={{ fontSize: "14px" }}>
+              <th className="py-3 px-4">Title</th>
+              <th className="py-3">Status</th>
+              <th className="py-3 text-center">Bids</th>
+              <th className="py-3 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody style={{ fontSize: "14px" }}>
+            {tenders.map((tender) => (
+              <tr key={tender.id}>
+                <td className="py-3 px-4 fw-bold text-dark">{tender.title}</td>
+                <td className="py-3">
+                  <span
+                    className={`badge rounded-pill px-3 py-2 fw-bold ${
+                      tender.status === "Open"
+                        ? "bg-success-subtle text-success"
+                        : "bg-danger-subtle text-danger"
+                    }`}
+                  >
+                    {tender.status}
+                  </span>
+                </td>
+                <td className="py-3 text-center fw-semibold">{tender.bids}</td>
+                <td className="py-3 text-center">
+                  <Button
+                    size="sm"
+                    className="border-0 px-3 text-white fw-semibold shadow-sm"
+                    style={{ backgroundColor: "#1d528f", fontSize: "12px" }}
+                  >
+                    View Bids
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </Card>
+    </Container>
+  );
+};
 
 export default Client_dashboard;

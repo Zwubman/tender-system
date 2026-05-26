@@ -172,8 +172,8 @@ function WorkerProfile() {
                   onChange={handleChange}
                   required
                 >
-                  <option value="available">Available Now</option>
-                  <option value="not_available">Not Available</option>
+                  <option value="Available">Available Now</option>
+                  <option value="Unavailable">Not Available</option>
                 </Form.Select>
               </Form.Group>
 
@@ -203,12 +203,12 @@ function WorkerProfile() {
                   onChange={handleChange}
                   required
                 >
-                  <option value="no">No</option>
-                  <option value="yes">Yes</option>
+                  <option value="false">No</option>
+                  <option value="true">Yes</option>
                 </Form.Select>
               </Form.Group>
 
-              {formData.has_certificate === "yes" && (
+              {formData.has_certificate === "true" && (
                 <Form.Group className="mb-3">
                   <Form.Label>Upload Certificate</Form.Label>
                   <Form.Control
