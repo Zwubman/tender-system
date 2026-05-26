@@ -1,5 +1,6 @@
 import express from "express";
 import sequelize from "../Configs/config.js";
+import Role from "../Models/roles.js";
 
 const router = express.Router();
 
@@ -26,6 +27,29 @@ router.get("/reset-database", async (req, res) => {
       message: "Database reset failed",
       error: error.message,
     });
+  }
+});
+
+router.get("/auto-create", async () => {
+  try {
+    const roles = ["admin", "client", "contractor", "worker"];
+
+    for (const role of roles) {
+      const [createdRole, created] = await Role.findOrCreate({
+        where: { name: role },
+        defaults: { name: role },
+      });
+
+      if (created) {
+        console.log(`${role} role created`);
+      } else {
+        console.log(`${role} role already exists`);
+      }
+    }
+
+    console.log("All roles initialized successfully");
+  } catch (error) {
+    console.error("Error creating roles:", error);
   }
 });
 
