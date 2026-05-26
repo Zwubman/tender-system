@@ -1,3 +1,5 @@
+import { verifyAccessToken } from "../Utils/generate_tokens.js";
+
 export const authenticate = (req, res, next) => {
   const authHeader = req.headers.authorization;
 

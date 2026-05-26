@@ -13,7 +13,7 @@ import upload from "../Middlewares/upload.js";
 
 const router = express.Router();
 
-router.post("/", create_tender);
+router.post("/", authenticate, create_tender);
 router.get("/:id", get_tender_details);
 router.get("/", get_client_tenders);
 router.post("/:id/boq-items", add_boq_item);

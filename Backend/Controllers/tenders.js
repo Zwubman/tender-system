@@ -4,58 +4,79 @@ import Bid from "../Models/bids.js";
 import BidItem from "../Models/bid_items.js";
 import TechnicalProposal from "../Models/technical_proposals.js";
 import BidSecurity from "../Models/bid_securities.js";
+import ClientProfile from "../Models/client_profiles.js";
+import User from "../Models/users.js";
+import sequelize from "../Configs/config.js";
 
 export const create_tender = async (req, res) => {
   try {
+    console.log("BODY:", req.body);
+
     const {
       title,
       description,
       location,
-      bid_security_required_amount,
+      bid_security_requirement_amount,
       deadline,
-      client_id,
-    } = req.body;
+    } = req.body || {};
+    const user_id = req.user.id;
 
+    const user = await User.findByPk(user_id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    const client_profile = await ClientProfile.findOne({
+      where: { user_id },
+    });
+
+    if(!client_profile) {
+      return res.status(404).json({
+        success: false,
+        message: "Client profile not found.",
+      });
+    }
     if (
       !title ||
       !description ||
       !location ||
       !deadline ||
-      !bid_security_required_amount
+      !bid_security_requirement_amount
     ) {
       return res.status(400).json({
-        error:
-          "Title, description, location, deadline, and bid_security_required_amount are required.",
+        success: false,
+        message:
+          "Title, description, location, deadline, and bid_security_requirement_amount are required.",
       });
     }
 
     const new_tender = await Tender.create({
-      client_id,
+      client_id: client_profile.client_id,
       title,
       description,
       location,
-      bid_security_required_amount,
+      bid_security_required_amount:
+        bid_security_requirement_amount,
       deadline,
       status: "draft",
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Tender created successfully",
-      tender: {
-        id: new_tender.tender_id,
-        client_id: new_tender.client_id,
-        project_title: new_tender.title,
-        description: new_tender.description,
-        location: new_tender.location,
-        deadline: new_tender.deadline,
-        bid_security_required_amount: new_tender.bid_security_required_amount,
-        status: new_tender.status,
-      },
+      tender: new_tender,
     });
+
   } catch (error) {
-    console.error("Error creating tender:", error);
-    res.status(500).json({ success: false, message: error.message });
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
