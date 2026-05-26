@@ -447,5 +447,3 @@ export const get_tender_bids = async (req, res) => {
     });
   }
 };
-
-
