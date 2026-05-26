@@ -136,8 +136,8 @@ export default function Create_tender() {
 
                 <Form.Control
                   type="number"
-                  name="bid_security_requirement"
-                  value={formData.bid_security_requirement}
+                  name="bid_security_requirement_amount"
+                  value={formData.bid_security_requirement_amount}
                   onChange={handleChange}
                   required
                 />
