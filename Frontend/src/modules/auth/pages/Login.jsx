@@ -90,11 +90,11 @@ export default function Login() {
         // Redirect based on role
         const role = data.user.role;
         if (location.pathname === "/login") {
-          if (role === "Admin") {
+          if (role === "admin") {
             navigate("/admin_dashboard");
-          } else if (role === "Client") {
+          } else if (role === "client") {
             navigate("/client-dashboard");
-          } else if (role === "Contractor") {
+          } else if (role === "contractor") {
             navigate("/contractor-dashboard");
           } else {
             navigate("/worker-dashboard");
