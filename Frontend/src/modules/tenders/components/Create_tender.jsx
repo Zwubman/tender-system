@@ -21,7 +21,7 @@ export default function Create_tender() {
     description: "",
     location: "",
     deadline: "",
-    bid_security_requirement: "",
+    bid_security_requirement_amount: "",
   });
 
   const [message, setMessage] = useState("");
@@ -154,4 +154,3 @@ export default function Create_tender() {
     </Container>
   );
 }
-
