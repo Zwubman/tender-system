@@ -34,7 +34,7 @@ export const register = async (req, res) => {
       throw new Error("Invalid email format");
     }
 
-    if (!["Admin", "Client", "Contractor", "Worker"].includes(role)) {
+    if (!["admin", "client", "contractor", "worker"].includes(role)) {
       throw new Error("Invalid role specified");
     }
 
@@ -67,7 +67,7 @@ export const register = async (req, res) => {
 
     // ROLE
     const role_record = await Role.findOne({
-      where: { name: roleName },
+      where: { name: role },
       transaction: t,
     });
 
@@ -75,7 +75,7 @@ export const register = async (req, res) => {
 
     await UserRole.create(
       {
-        user_id: newUser.user_id,
+        user_id: user.user_id,
         role_id: role_record.role_id,
       },
       { transaction: t },

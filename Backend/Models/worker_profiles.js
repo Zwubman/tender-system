@@ -40,7 +40,7 @@ const WorkerProfile = sequelize.define(
       allowNull: false,
     },
     availability: {
-      type: DataTypes.ENUM("Available", "Assigned"),
+      type: DataTypes.ENUM("Available", "Unavailable"),
       defaultValue: "Available",
       allowNull: false,
     },

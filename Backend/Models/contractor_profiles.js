@@ -33,6 +33,9 @@ const ContractorProfile = sequelize.define(
     license_document: {
       type: DataTypes.STRING(255),
     },
+    past_projects: {
+      type: DataTypes.TEXT,
+    },
     verification_status: {
       type: DataTypes.ENUM("pending", "verified", "suspended"),
       defaultValue: "pending",

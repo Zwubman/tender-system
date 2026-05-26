@@ -18,23 +18,23 @@ export const create_client_profile = async (req, res) => {
     } = req.body;
 
     // Uploaded files URLs
-    let business_license_file = null;
+    let business_license = null;
 
-    if (req.files?.business_license_file?.length > 0) {
-      const uploadedFile = req.files.business_license_file[0];
+    if (req.files?.business_license?.length > 0) {
+      const uploadedFile = req.files.business_license[0];
 
-      business_license_file = `${req.protocol}://${req.get("host")}/${uploadedFile.path.replace(
+      business_license = `${req.protocol}://${req.get("host")}/${uploadedFile.path.replace(
         /\\/g,
         "/",
       )}`;
     }
 
-    let id_certificate_file = null;
+    let id_certificate = null;
 
-    if (req.files?.id_certificate_file?.length > 0) {
-      const uploadedFile = req.files.id_certificate_file[0];
+    if (req.files?.id_certificate?.length > 0) {
+      const uploadedFile = req.files.id_certificate[0];
 
-      id_certificate_file = `${req.protocol}://${req.get("host")}/${uploadedFile.path.replace(
+      id_certificate = `${req.protocol}://${req.get("host")}/${uploadedFile.path.replace(
         /\\/g,
         "/",
       )}`;
@@ -56,7 +56,7 @@ export const create_client_profile = async (req, res) => {
       where: { role_id: user_role.role_id },
     });
 
-    if (role.name !== "Client") {
+    if (role.name !== "client") {
       return res.status(403).json({
         success: false,
         message: "Only users with client role can create client profile",
@@ -82,8 +82,8 @@ export const create_client_profile = async (req, res) => {
       city,
       sub_city,
       description,
-      id_certificate_file,
-      business_license_file,
+      id_certificate_file: id_certificate,
+      business_license_file: business_license,
     });
 
     return res.status(200).json({
