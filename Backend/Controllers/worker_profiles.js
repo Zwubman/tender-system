@@ -31,13 +31,13 @@ export const create_worker_profile = async (req, res) => {
       )}`;
     }
 
-    let certificates_files = null;
+    let certificate_file = null;
 
     if (has_certification === "true" || has_certification === true) {
-      if (req.files?.certificates_files?.length > 0) {
-        const uploadedFile = req.files.certificates_files[0];
+      if (req.files?.certificate_file?.length > 0) {
+        const uploadedFile = req.files.certificate_file[0];
 
-        certificates_files = `${req.protocol}://${req.get("host")}/${uploadedFile.path.replace(
+        certificate_file = `${req.protocol}://${req.get("host")}/${uploadedFile.path.replace(
           /\\/g,
           "/",
         )}`;
@@ -60,7 +60,7 @@ export const create_worker_profile = async (req, res) => {
       where: { role_id: user_role.role_id },
     });
 
-    if (role.name !== "Worker") {
+    if (role.name !== "worker") {
       return res.status(403).json({
         success: false,
         message: "Only users with worker role can create worker profile",
@@ -88,7 +88,7 @@ export const create_worker_profile = async (req, res) => {
       expected_wage,
       experience_document,
       has_certification,
-      certificates_files,
+      certificates_files: certificate_file,
     });
 
     return res.status(200).json({

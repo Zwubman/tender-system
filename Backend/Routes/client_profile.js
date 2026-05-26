@@ -13,8 +13,8 @@ const router = express.Router();
 router.post(
   "/profile",
   upload.fields([
-    { name: "business_license_file", maxCount: 1 },
-    { name: "id_certificate_file", maxCount: 1 },
+    { name: "business_license", maxCount: 1 },
+    { name: "id_certificate", maxCount: 1 },
   ]),
   create_client_profile,
 );

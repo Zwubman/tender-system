@@ -11,6 +11,7 @@ export const create_contractor_profile = async (req, res) => {
       license_number,
       experience_years,
       specialization,
+      past_projects,
     } = req.body;
 
     let license_document = null;
@@ -31,7 +32,7 @@ export const create_contractor_profile = async (req, res) => {
       where: { role_id: user_role.role_id },
     });
 
-    if (role.name !== "Contractor") {
+    if (role.name !== "contractor") {
       return res.status(403).json({
         success: false,
         message:
@@ -59,6 +60,7 @@ export const create_contractor_profile = async (req, res) => {
       experience_years,
       specialization,
       license_document,
+      past_projects,
     });
 
     return res.status(200).json({

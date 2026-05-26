@@ -29,6 +29,7 @@ import workerProfileRoute from "./Routes/worker_profiles.js";
 import clientProfileRoute from "./Routes/client_profile.js";
 import contractorProfileRoute from "./Routes/contractor_profile.js";
 import tenderRoutes from "./Routes/tenders.js";
+import bidRoutes from "./Routes/bids.js";
 
 dotenv.config();
 
@@ -53,6 +54,7 @@ app.use("/workers", workerProfileRoute);
 app.use("/clients", clientProfileRoute);
 app.use("/contractors", contractorProfileRoute);
 app.use("/tenders", tenderRoutes);
+app.use("/bids", bidRoutes);
 
 const startServer = async () => {
   try {

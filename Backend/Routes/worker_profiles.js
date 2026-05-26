@@ -16,7 +16,7 @@ router.post(
   "/profile",
   upload.fields([
     { name: "experience_document", maxCount: 1 },
-    { name: "certificates_files", maxCount: 1 },
+    { name: "certificate_file", maxCount: 1 },
   ]),
   create_worker_profile,
 );
