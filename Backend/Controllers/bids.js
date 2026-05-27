@@ -492,3 +492,47 @@ export const cancel_bid = async (req, res) => {
     });
   }
 };
+
+// Select bid
+export const select_bid = async (req, res) => {
+  try {
+    const {bidId} = req.params.id;
+    const { selection_reason } = req.body;
+
+    const bid = await Bid.where({ bid_id: bidId });
+    if(!bid) {
+      return res.status(404).json({
+        success: false,
+        message: "Bid not found.",
+      });
+    }
+
+    const tender = await Tender.findOne({ where: { tender_id: bid.tender_id } });
+    if(!tender) {
+      return res.status(404).json({
+        success: false,
+        message: "Tender not found.",
+      });
+    }
+    
+    await tender.update({
+      selected_bid_id: bid.bid_id,
+      selection_reason,
+      status: "awarded",
+    });
+
+    await bid.update({ status: "accepted" });
+
+    return res.status(200).json({
+      success: true,
+      message: "Bid selected successfully",
+    });
+  } catch (error) {
+    console.error("Error selecting bid:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
