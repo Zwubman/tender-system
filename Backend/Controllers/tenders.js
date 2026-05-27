@@ -19,7 +19,7 @@ export const create_tender = async (req, res) => {
       bid_security_requirement_amount,
       deadline,
     } = req.body || {};
-    const user_id = req.user.id;
+    const user_id = req.user.user_id;
 
     const user = await User.findByPk(user_id);
     if (!user) {
@@ -125,8 +125,21 @@ export const get_client_tenders = async (req, res) => {
         .json({ error: "client_id query parameter is required." });
     }
 
+    const user = await User.findOne({ where: { user_id: client_id } });
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    const client_profile = await ClientProfile.findOne({
+      where: { user_id: client_id },
+    });
+
+    if (!client_profile) {
+      return res.status(404).json({ error: "Client profile not found." });
+    }
+
     const tenders = await Tender.findAll({
-      where: { client_id },
+      where: { client_id: client_profile.client_id },
       include: [
         {
           model: BOQItem,
@@ -160,45 +173,7 @@ export const get_client_tenders = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-// the controller function to handle add the boq items to the specific tender
-// export const add_boq_item = async (req, res) => {
-//   try {
-//     console.log("Adding BOQ Item with Data:", req.body);
-//     const id = req.params.id;
-//     const { description, item_no, unit, quantity } = req.body;
 
-//     if (!description || !item_no || !unit || !quantity) {
-//       return res.status(400).json({
-//         error: "Description, item_no, unit, and quantity are required.",
-//       });
-//     }
-
-//     const tender = await Tender.findByPk(id);
-//     if (!tender) {
-//       return res.status(404).json({ error: "Tender not found." });
-//     }
-
-//     const new_boq_item = await BOQItem.create({
-//       tender_id: id,
-//       description,
-//       item_no,
-//       unit,
-//       quantity,
-//     });
-
-//     tender.boq_added = true;
-//     await tender.save();
-
-//     res.status(201).json({
-//       success: true,
-//       message: "BOQ item added successfully",
-//       boq_id: new_boq_item.boq_id,
-//     });
-//   } catch (error) {
-//     console.error("Error adding BOQ item:", error);
-//     res.status(500).json({ success: false, message: error.message });
-//   }
-// };
 export const add_boq_item = async (req, res) => {
   try {
     const id = req.params.id;
@@ -520,6 +495,55 @@ export const get_tender_bids = async (req, res) => {
     console.error("Error fetching bids:", error);
 
     return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+export const publish_tender = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const tender = await Tender.findByPk(id);
+
+    if (!tender) {
+      return res.status(404).json({
+        success: false,
+        message: "Tender not found.",
+      });
+    }
+
+    const boq_items = await BOQItem.findAll({
+      where: { tender_id: tender.tender_id },
+    });
+
+    if (boq_items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot publish tender without BOQ items.",
+      });
+    }
+
+    if(tender.status !== "draft"){
+      return res.status(400).json({
+        success: false,
+        message: "Only tenders in draft status can be published.",
+      });
+    }
+
+    tender.status = "open";
+    await tender.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Tender published successfully",
+      tender,
+    });
+  } catch (error) {
+    console.error("Error publishing tender:", error);
+
+    return res.status(400).json({
       success: false,
       message: error.message,
     });

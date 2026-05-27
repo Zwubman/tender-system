@@ -7,6 +7,7 @@ import {
   get_tender_boq_items,
   submit_bid,
   get_tender_bids,
+  publish_tender,
 } from "../Controllers/tenders.js";
 import { authenticate, requireRole } from "../Middlewares/auth.js";
 import upload from "../Middlewares/upload.js";
@@ -29,6 +30,7 @@ router.post(
   submit_bid
 );
 router.get("/:id/bids", get_tender_bids);
+router.patch("/:id/publish", publish_tender);
 
 
 export default router;

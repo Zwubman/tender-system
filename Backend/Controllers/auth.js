@@ -110,7 +110,10 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ where: { email, status: "active" } });
+    const user = await User.findOne({
+      where: { email, status: "active" },
+    });
+
     if (!user) {
       return res.status(400).json({
         success: false,
@@ -118,78 +121,42 @@ export const login = async (req, res) => {
       });
     }
 
+    // Find user role
     const user_role = await UserRole.findOne({
       where: { user_id: user.user_id },
     });
-    const role = await Role.findOne({ where: { role_id: user_role.role_id } });
 
-    // if (role.name === "Client") {
-    //   const client_profile = await ClientProfile.findOne({
-    //     where: { user_id: user.user_id },
-    //   });
-
-    //   if (!client_profile) {
-    //     return res.status(404).json({
-    //       success: false,
-    //       message: "Client profile not found",
-    //     });
-    //   }
-
-    //   if (client_profile.verification_status !== "verified") {
-    //     return res.status(403).json({
-    //       success: false,
-    //       message:
-    //         "Your profile is not verified yet. Please wait for verification.",
-    //     });
-    //   }
-    // } else if (role.name === "Contractor") {
-    //   const contractor_profile = await ContractorProfile.findOne({
-    //     where: { user_id: user.user_id },
-    //   });
-
-    //   if (!contractor_profile) {
-    //     return res.status(404).json({
-    //       success: false,
-    //       message: "Contractor profile not found",
-    //     });
-    //   }
-
-    //   if (contractor_profile.verification_status !== "verified") {
-    //     return res.status(403).json({
-    //       success: false,
-    //       message:
-    //         "Your profile is not verified yet. Please wait for verification.",
-    //     });
-    //   }
-    // } else if (role.name === "Worker") {
-    //   const worker_profile = await WorkerProfile.findOne({
-    //     where: { user_id: user.user_id },
-    //   });
-
-    //   if (!worker_profile) {
-    //     return res.status(404).json({
-    //       success: false,
-    //       message: "Worker profile not found",
-    //     });
-    //   }
-
-    //   if (worker_profile.verification_status !== "verified") {
-    //     return res.status(403).json({
-    //       success: false,
-    //       message:
-    //         "Your profile is not verified yet. Please wait for verification.",
-    //     });
-    //   }
-    // }
-
-    const is_match = await bcrypt.compare(password, user.password_hash);
-    if (!is_match) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Incorrect password" });
+    // CHECK IF ROLE EXISTS
+    if (!user_role) {
+      return res.status(400).json({
+        success: false,
+        message: "No role assigned to this user",
+      });
     }
 
-    // Payload for JWT (optional to include JWT now or after OTP verification)
+    // Find role
+    const role = await Role.findOne({
+      where: { role_id: user_role.role_id },
+    });
+
+    // CHECK IF ROLE RECORD EXISTS
+    if (!role) {
+      return res.status(400).json({
+        success: false,
+        message: "Role not found",
+      });
+    }
+
+    // Check password
+    const is_match = await bcrypt.compare(password, user.password_hash);
+
+    if (!is_match) {
+      return res.status(400).json({
+        success: false,
+        message: "Incorrect password",
+      });
+    }
+
     const payload = {
       user_id: user.user_id,
       full_name: user.full_name,
@@ -197,7 +164,9 @@ export const login = async (req, res) => {
       user_role: role.name,
       email: user.email,
     };
+
     console.log("Login Payload:", payload);
+
     const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(payload);
 
@@ -223,9 +192,11 @@ export const login = async (req, res) => {
       },
     });
   } catch (error) {
-    return res
-      .status(400)
-      .json({ success: false, message: error.message, user: null });
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+      user: null,
+    });
   }
 };
 
