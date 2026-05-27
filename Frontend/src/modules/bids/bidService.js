@@ -56,6 +56,7 @@ const getMyBids = async (loggedInUserToken, contrdctorId) => {
 };
 // the frontend service function that send the request to select the winning bids(contractor)
 const selectWinningBid = async (bidId, selectionData, loggedInUserToken) => {
+  const id = bidId;
   const requestOpetions = {
     method: "PATCH",
 
@@ -66,7 +67,7 @@ const selectWinningBid = async (bidId, selectionData, loggedInUserToken) => {
     body: JSON.stringify(selectionData),
   };
 
-  const response = await apiFetch(`/bids/${bidId}/select`, requestOpetions);
+  const response = await apiFetch(`/bids/${id}/select`, requestOpetions);
   return response;
 };
 //  export all the function
