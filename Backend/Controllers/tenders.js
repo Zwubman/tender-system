@@ -491,10 +491,14 @@ export const get_tender_bids = async (req, res) => {
 
       include: [
         {
-          model: User,
-          attributes: ["full_name"],
+          model: ContractorProfile,
+          include: [
+            {
+              model: User,
+              attributes: ["full_name"],
+            },
+          ],
         },
-
         {
           model: TechnicalProposal,
           attributes: [
@@ -531,7 +535,7 @@ export const get_tender_bids = async (req, res) => {
     const bids = bidsData.map((bid) => ({
       bid_id: bid.bid_id,
 
-      contractor_name: bid.User?.full_name,
+      contractor_name: bid.ContractorProfile?.User?.full_name,
 
       status: bid.status,
 
