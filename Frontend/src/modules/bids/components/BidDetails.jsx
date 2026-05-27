@@ -75,21 +75,50 @@ export default function BidDetails() {
   // =========================
 
   useEffect(() => {
+    // 1. Wait for Auth to finish loading
+    if (loading) return;
+
+    // 2. Ensure we have a token
+    if (!loggedInUserToken) {
+      setError("Unauthorized: Please log in to view bid details.");
+      setDataLoading(false);
+      return;
+    }
+
     const fetchBidDetails = async () => {
       try {
         const res = await bidService.fetchBidDetail(bidId, loggedInUserToken);
 
-        const data = await res.json();
+        // FIX: Check if response is structurally healthy BEFORE calling res.json()
+        if (!res.ok) {
+          // Handle explicit server errors (like 400, 401, 404, 500) safely
+          let errorMessage = `Server error: Finished with status code ${res.status}`;
+          try {
+            const errorData = await res.json();
+            errorMessage = errorData.message || errorMessage;
+          } catch (e) {
+            // If decoding fails, fallback to standard status text or reading plain text
+            const textFallback = await res.text();
+            if (textFallback) errorMessage = textFallback.substring(0, 100);
+          }
+          setError(errorMessage);
+          return; // Stop execution here
+        }
 
-        if (res.ok) {
+        // If res.ok is true, it is safe to parse the JSON structural payload
+        const data = await res.json();
+        console.log("Bid Details Response:", data);
+
+        if (data && data.bid) {
           setBid(data.bid);
         } else {
-          setError(data.message);
+          setError(
+            "Bid payload could not be extracted from the backend data structure.",
+          );
         }
       } catch (error) {
-        console.error(error);
-
-        setError("Failed to load bid details");
+        console.error("Caught processing exception:", error);
+        setError(`Failed to load bid details: ${error.message}`);
       } finally {
         setDataLoading(false);
       }
@@ -98,7 +127,7 @@ export default function BidDetails() {
     if (loggedInUserToken) {
       fetchBidDetails();
     }
-  }, [bidId, loggedInUserToken]);
+  }, [bidId, loggedInUserToken, loading]);
 
   // =========================
   // select contractor

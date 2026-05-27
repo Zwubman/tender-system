@@ -230,7 +230,7 @@ export default function SubmitBidPage() {
         setSuccess(true);
         setSubmittedBid(data.bid);
         setTimeout(() => {
-          navigate("/contractor/my-bids");
+          navigate("/my-bids");
         }, 3000);
       } else {
         setError(data?.message || "Failed to submit bid.");
