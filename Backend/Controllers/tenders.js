@@ -337,7 +337,7 @@ export const submit_bid = async (req, res) => {
       });
     }
 
-    if(tender.status !== "open"){
+    if (tender.status !== "open") {
       await t.rollback();
 
       return res.status(400).json({
@@ -346,9 +346,10 @@ export const submit_bid = async (req, res) => {
       });
     }
 
-    const compare_date = new Date(tender.deadline) < new Date(issue_date);
+    const issueDate = new Date(issue_date);
+    const deadlineDate = new Date(tender.deadline);
 
-    if(compare_date){
+    if (issueDate <= deadlineDate) {
       await t.rollback();
 
       return res.status(400).json({
@@ -490,10 +491,14 @@ export const get_tender_bids = async (req, res) => {
 
       include: [
         {
-          model: User,
-          attributes: ["full_name"],
+          model: ContractorProfile,
+          include: [
+            {
+              model: User,
+              attributes: ["full_name"],
+            },
+          ],
         },
-
         {
           model: TechnicalProposal,
           attributes: [
@@ -530,7 +535,7 @@ export const get_tender_bids = async (req, res) => {
     const bids = bidsData.map((bid) => ({
       bid_id: bid.bid_id,
 
-      contractor_name: bid.User?.full_name,
+      contractor_name: bid.ContractorProfile?.User?.full_name,
 
       status: bid.status,
 
@@ -561,7 +566,6 @@ export const get_tender_bids = async (req, res) => {
   }
 };
 
-
 export const publish_tender = async (req, res) => {
   try {
     const id = req.params.id;
@@ -585,7 +589,7 @@ export const publish_tender = async (req, res) => {
       });
     }
 
-    if(tender.status !== "draft"){
+    if (tender.status !== "draft") {
       return res.status(400).json({
         success: false,
         message: "Only tenders in draft status can be published.",
