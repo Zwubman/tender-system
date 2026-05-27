@@ -24,7 +24,6 @@ router.get("/:id/boq-items", get_tender_boq_items);
 router.post(
   "/:id/submit-bids",
   authenticate,
-  requireRole("Contractor", "Admin"),
   upload.fields([
     { name: "technical_document", maxCount: 1 },
     { name: "guarantee_document", maxCount: 1 },

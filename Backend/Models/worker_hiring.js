@@ -25,14 +25,6 @@ const WorkerHiring = sequelize.define(
         key: "worker_id",
       },
     },
-    tender_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      references: {
-        model: "tenders",
-        key: "tender_id",
-      },
-    },
     messages: {
       type: DataTypes.TEXT,
     },
