@@ -34,11 +34,6 @@ export default function MyTenders() {
         setDataLoading(true);
         setError("");
 
-        console.log("Sending clean data to backend:", {
-          clientId,
-          loggedInUserToken,
-        });
-
         const res = await tenderService.clientTenders(
           clientId,
           loggedInUserToken,

@@ -2,80 +2,76 @@ import { useState } from "react";
 import { Nav, Button } from "react-bootstrap";
 import { Link, useLocation } from "react-router-dom";
 
-export default function Sidebar({role}) {
+export default function Sidebar({ role }) {
   const location = useLocation();
   const [showMenu, setShowMenu] = useState(false);
   const menuItems = {
-      admin: [
-         {
-            name: "Dashboard",
-            path: "/admin-dashboard"
-         },
+    admin: [
+      {
+        name: "Dashboard",
+        path: "/admin-dashboard",
+      },
 
-         {
-            name: "Manage Users",
-            path: "/users"
-         },
+      {
+        name: "Manage Users",
+        path: "/users",
+      },
 
-         {
-            name: "All Tenders",
-            path: "/tenders"
-         },
+      {
+        name: "All Tenders",
+        path: "/tenders",
+      },
 
-         {
-            name: "All Bids",
-            path: "/bids"
-         }
-      ],
+      {
+        name: "All Bids",
+        path: "/bids",
+      },
+    ],
 
-      client: [
-    { name: "Dashboard", path: "/client-dashboard" },
-    { name: "Create Tender", path: "/create-tender" },
-    { name: "My Tenders", path: "/my-tenders" },
-    { name: "Review Bids", path: "/review-bids" },
-    { name: "Award Decisions", path: "/award-tenders" },
-    { name: "Notifications", path: "/notifications" },
-    { name: "Profile", path: "/client-profile" }
-  ],
+    client: [
+      { name: "Dashboard", path: "/client-dashboard" },
+      { name: "Create Tender", path: "/create-tender" },
+      { name: "My Tenders", path: "/my-tenders" },
+      { name: "Review Bids", path: "/review-bids" },
+      { name: "Award Decisions", path: "/award-tenders" },
+      { name: "Notifications", path: "/notifications" },
+      { name: "Profile", path: "/client-profile" },
+    ],
 
-      contractor: [
-         {
-            name: "Dashboard",
-            path: "/contractor-dashboard"
-         },
+    contractor: [
+      {
+        name: "Dashboard",
+        path: "/contractor-dashboard",
+      },
 
-         {
-            name: "Available Tenders",
-            path: "/tenders"
-         },
+      {
+        name: "Available Tenders",
+        path: "/tenders",
+      },
 
-         {
-            name: "My Bids",
-            path: "/my-bids"
-         },
+      {
+        name: "My Bids",
+        path: "/my-bids",
+      },
 
-         {
-            name: "Workers",
-            path: "/workers"
-         },
-         {
-          name: "Profile",
-          path: "/profile"
-         }
-      ]
-   };
-
- const currentMenus = menuItems[role] || [];
+      {
+        name: "Workers",
+        path: "/workers",
+      },
+      {
+        name: "Profile",
+        path: "/profile",
+      },
+    ],
+  };
+  console.log("User role in sidebar:", role);
+  const currentMenus = menuItems[role] || [];
 
   return (
     <>
       {/* mobile top bar */}
-      <div
-        className="d-lg-none bg-primary text-white px-3 py-2 d-flex justify-content-between align-items-center"
-      >
-        <div className="fw-bold">
-          menu
-        </div>
+      <div className="d-lg-none bg-primary text-white px-3 py-2 d-flex justify-content-between align-items-center">
+        <div className="fw-bold">menu</div>
 
         <Button
           variant="outline-light"
@@ -90,7 +86,6 @@ export default function Sidebar({role}) {
       {showMenu && (
         <div className="d-lg-none bg-dark px-2 pb-3">
           <Nav className="flex-column">
-
             {currentMenus.map((item) => (
               <Nav.Link
                 key={item.path}
@@ -116,15 +111,12 @@ export default function Sidebar({role}) {
         style={{
           minHeight: "100vh",
           width: "250px",
-          background: "#0b1b3d"
+          background: "#0b1b3d",
         }}
       >
-        <h4 className="text-center mb-4 border-bottom pb-3">
-          Menu Panel
-        </h4>
+        <h4 className="text-center mb-4 border-bottom pb-3">Menu Panel</h4>
 
         <Nav className="flex-column">
-
           {currentMenus.map((item) => (
             <Nav.Link
               key={item.path}
@@ -136,10 +128,9 @@ export default function Sidebar({role}) {
                   : "text-light"
               }`}
             >
-             <b> {item.name}</b>
+              <b> {item.name}</b>
             </Nav.Link>
           ))}
-
         </Nav>
       </div>
     </>

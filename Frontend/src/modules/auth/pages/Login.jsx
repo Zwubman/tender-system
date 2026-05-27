@@ -91,13 +91,13 @@ export default function Login() {
         const role = data.user?.role;
 
         if (role === "admin") {
-          navigate("/admin-dashboard");
+          navigate("/admin-dashboard", { state: { role: role } });
         } else if (role === "client") {
-          navigate("/client-dashboard");
+          navigate("/client-dashboard", { state: { role: role } });
         } else if (role === "contractor") {
-          navigate("/contractor-dashboard");
+          navigate("/contractor-dashboard", { state: { role: role } });
         } else {
-          navigate("/worker-dashboard");
+          navigate("/worker-dashboard", { state: { role: role } });
         }
       } else {
         setServerError(data.message || "Invalid credentials");

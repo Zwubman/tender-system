@@ -40,20 +40,28 @@ export default function TenderDetails() {
   // get the token that is stored in the local storage when the user logs in
   const { user, loading } = useAuth();
   let loggedInUserToken = !loading ? user?.token : null;
-  const userRole = user?.role;
+  const userRole = user?.user_role;
   // fetch tender details
   useEffect(() => {
     const fetchTender = async () => {
       try {
+        // Critical Guard: Stop right here if Auth is still loading from local storage
+        if (loading) return;
+        // 3. If auth finished loading but there is no user token, show an error and stop
+        if (!loggedInUserToken) {
+          setError("You must be logged in to view your tenders.");
+          setDataLoading(false);
+          return;
+        }
         const res = await tenderService.tenderDetail(
           tenderId,
           loggedInUserToken,
         );
-
         const data = await res.json();
 
         if (res.ok) {
           setTender(data.tender);
+          console.log("Fetched Tender Details:", data.tender);
         } else {
           setError(data.message);
         }
@@ -177,7 +185,7 @@ export default function TenderDetails() {
                 </thead>
 
                 <tbody>
-                  {tender.boq_items?.map((item) => (
+                  {tender.BOQItems?.map((item) => (
                     <tr key={item.boq_id}>
                       <td>{item.item_no}</td>
 
