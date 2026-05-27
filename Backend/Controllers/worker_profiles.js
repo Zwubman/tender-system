@@ -5,6 +5,7 @@ import Role from "../Models/roles.js";
 import UserRole from "../Models/user_roles.js";
 import User from "../Models/users.js";
 import WorkerRating from "../Models/worker_ratings.js";
+import { Op } from "sequelize";
 
 
 export const create_worker_profile = async (req, res) => {
@@ -389,6 +390,58 @@ export const hire_worker = async (req, res) => {
     });
   } catch (error) {
     console.error("Error hiring worker:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Search Worker by location, skill, experience and availability
+export const search_workers = async (req, res) => {
+  try {
+    const { location, skill, experience_years, availability } = req.query;
+
+    const whereClause = {};
+
+    // Case-insensitive location search
+    if (location) {
+      whereClause.preferred_location = {
+        [Op.iLike]: `%${location}%`,
+      };
+    }
+
+    // Case-insensitive skill search
+    if (skill) {
+      whereClause.primary_skill = {
+        [Op.iLike]: `%${skill}%`,
+      };
+    }
+
+    // Exact experience match
+    if (experience_years) {
+      whereClause.experience_years = experience_years;
+    }
+
+    // Case-insensitive availability search
+    if (availability) {
+      whereClause.availability = {
+        [Op.iLike]: `%${availability}%`,
+      };
+    }
+
+    const workers = await WorkerProfile.findAll({
+      where: whereClause,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Workers fetched successfully",
+      workers,
+    });
+  } catch (error) {
+    console.error("Error searching workers:", error);
 
     return res.status(500).json({
       success: false,

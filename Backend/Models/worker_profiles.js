@@ -20,10 +20,10 @@ const WorkerProfile = sequelize.define(
       },
       onDelete: "CASCADE",
     },
-    gender: {
-      type: DataTypes.ENUM("Male", "Female"),
-      allowNull: false,
-    },
+    // gender: {
+    //   type: DataTypes.ENUM("Male", "Female"),
+    //   allowNull: false,
+    // },
     primary_skill: {
       type: DataTypes.STRING(100),
       allowNull: false,

@@ -147,6 +147,31 @@ export const login = async (req, res) => {
       });
     }
 
+    let verification_status = null;
+    if(role.name === "contractor") {
+      const contractorProfile = await ContractorProfile.findOne({
+        where: { user_id: user.user_id },
+      });
+      verification_status = contractorProfile ? contractorProfile.verification_status : null;
+    } else if(role.name === "worker") {
+      const workerProfile = await WorkerProfile.findOne({
+        where: { user_id: user.user_id },
+      });
+      verification_status = workerProfile ? workerProfile.verification_status : null;
+    }else if(role.name === "client") {
+      const clientProfile = await ClientProfile.findOne({
+        where: { user_id: user.user_id },
+      });
+      verification_status = clientProfile ? clientProfile.verification_status : null;
+    }else if(role.name === "admin") {
+      verification_status = "verified"; 
+    }else{ 
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role",
+      });
+    }
+
     // Check password
     const is_match = await bcrypt.compare(password, user.password_hash);
 
@@ -163,6 +188,7 @@ export const login = async (req, res) => {
       phone_number: user.phone_number,
       user_role: role.name,
       email: user.email,
+      verification_status,
     };
 
     console.log("Login Payload:", payload);
@@ -189,6 +215,7 @@ export const login = async (req, res) => {
         full_name: user.full_name,
         email: user.email,
         phone_number: user.phone_number,
+        verification_status,
       },
     });
   } catch (error) {

@@ -32,6 +32,7 @@ import tenderRoutes from "./Routes/tenders.js";
 import bidRoutes from "./Routes/bids.js";
 import adminRoutes from "./Routes/admin.js";
 import workerHiringRoutes from "./Routes/worker_hiring.js";
+import boqItemRoutes from "./Routes/boq_items.js";
 
 dotenv.config();
 
@@ -59,7 +60,7 @@ app.use("/tenders", tenderRoutes);
 app.use("/bids", bidRoutes);
 app.use("/admin", adminRoutes);
 app.use("/hiring", workerHiringRoutes);
-
+app.use("/boq-items", boqItemRoutes);
 const startServer = async () => {
   try {
     await sequelize.authenticate();

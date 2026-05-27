@@ -9,6 +9,7 @@ import {
   rate_worker,
   get_worker_ratings,
   hire_worker,
+  search_workers,
 } from "../Controllers/worker_profiles.js";
 import { authenticate, requireRole } from "../Middlewares/auth.js";
 import upload from "../Middlewares/upload.js";
@@ -31,6 +32,7 @@ router.put(
   update_worker_profile,
 );
 router.get("/", get_all_worker_profiles);
+router.get("/search", search_workers);
 router.get("/:id", get_worker_profile_by_id);
 router.get("/:id/ratings", get_worker_ratings);
 router.delete("/profile", delete_worker_profile);
