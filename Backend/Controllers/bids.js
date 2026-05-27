@@ -8,6 +8,7 @@ import Tender from "../Models/tenders.js";
 import TechnicalProposal from "../Models/technical_proposals.js";
 import BidSecurity from "../Models/bid_securities.js";
 import BidItem from "../Models/bid_items.js";
+import BOQItem from "../Models/boq_items.js";
 
 //Get the detail information of the specific bid that submitted to the tender
 export const get_bid_details = async (req, res) => {
@@ -61,6 +62,13 @@ export const get_bid_details = async (req, res) => {
         {
           model: BidItem,
           attributes: ["bid_item_id", "boq_id", "unit_price", "total_price"],
+
+          include: [
+            {
+              model: BOQItem,
+              attributes: ["item_no", "description"],
+            },
+          ],
         },
       ],
     });
@@ -93,7 +101,19 @@ export const get_bid_details = async (req, res) => {
       bid_security: bid.BidSecurity,
       financial_visible,
 
-      financial_proposal: financial_visible ? bid.BidItems : [],
+      financial_proposal: financial_visible
+        ? bid.BidItems.map((item) => ({
+            bid_item_id: item.bid_item_id,
+
+            item_no: item.BOQItem?.item_no || null,
+
+            description: item.BOQItem?.description || null,
+
+            unit_price: item.unit_price,
+
+            total_price: item.total_price,
+          }))
+        : [],
     };
 
     return res.status(200).json({

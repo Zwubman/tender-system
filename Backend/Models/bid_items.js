@@ -1,5 +1,6 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../Configs/config.js";
+import BOQItem from "./boq_items.js";
 
 const BidItem = sequelize.define(
   "BidItem",
@@ -38,5 +39,13 @@ const BidItem = sequelize.define(
     timestamps: true,
   }
 );
+
+BidItem.belongsTo(BOQItem, {
+  foreignKey: "boq_id",
+});
+
+BOQItem.hasMany(BidItem, {
+  foreignKey: "boq_id",
+});
 
 export default BidItem;
