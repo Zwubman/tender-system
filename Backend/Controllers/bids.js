@@ -496,10 +496,10 @@ export const cancel_bid = async (req, res) => {
 // Select bid
 export const select_bid = async (req, res) => {
   try {
-    const {bidId} = req.params.bidId;
+    const id = req.params.id;
     const { selection_reason } = req.body;
 
-    const bid = await Bid.findOne({ where: { bid_id: bidId } });
+    const bid = await Bid.findOne({ where: { bid_id: id } });
     if(!bid) {
       return res.status(404).json({
         success: false,
