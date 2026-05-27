@@ -13,5 +13,5 @@ router.get("/", get_contractor_bids);
 router.get("/:id", get_bid_details);
 router.put("/:id", update_bid);
 router.delete("/:id", cancel_bid);
-router.patch("/:id/select", select_bid);
+router.patch("/:bidId/select", select_bid);
 export default router;
