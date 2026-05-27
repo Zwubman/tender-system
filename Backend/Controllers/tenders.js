@@ -281,19 +281,52 @@ export const submit_bid = async (req, res) => {
     } = req.body;
 
     // Prevent duplicate bid
-    const existingBid = await Bid.findOne({
+    const existing_bid = await Bid.findOne({
       where: {
         tender_id,
         contractor_id,
       },
     });
 
-    if (existingBid) {
+    if (existing_bid) {
       await t.rollback();
 
       return res.status(400).json({
         success: false,
         message: "You have already submitted a bid for this tender.",
+      });
+    }
+
+    const tender = await Tender.findOne({
+      where: { tender_id },
+    });
+
+    if (!tender) {
+      await t.rollback();
+
+      return res.status(404).json({
+        success: false,
+        message: "Tender not found.",
+      });
+    }
+
+    if(tender.status !== "open"){
+      await t.rollback();
+
+      return res.status(400).json({
+        success: false,
+        message: "Bids can only be submitted to open tenders.",
+      });
+    }
+
+    const compare_date = new Date(tender.deadline) < new Date(issue_date);
+
+    if(compare_date){
+      await t.rollback();
+
+      return res.status(400).json({
+        success: false,
+        message: "Bid security issue date must be after tender deadline.",
       });
     }
 
