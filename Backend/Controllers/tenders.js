@@ -582,3 +582,30 @@ export const publish_tender = async (req, res) => {
     });
   }
 };
+
+// To retrieve open tender
+export const get_open_tenders = async (req, res) => {
+  try {
+    const open_tenders = await Tender.findAll({
+      where: { status: "open" },
+      include: [
+        {
+          model: BOQItem,
+          attributes: ["boq_id", "description", "item_no", "unit", "quantity"],
+        },
+      ],
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Open tenders fetched successfully",
+      tenders: open_tenders,
+    });
+  } catch (error) {
+    console.error("Error fetching open tenders:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
