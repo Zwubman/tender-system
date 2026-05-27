@@ -52,6 +52,8 @@ import TenderDetails from "./modules/tenders/components/tenderDetails.jsx";
 import ViewSubmittedBids from "./modules/bids/components/ViewSubmittedBids.jsx";
 // import the BidDetails page
 import BidDetails from "./modules/bids/components/BidDetails.jsx";
+// import the worker pages
+import WorkersPage from "./modules/users/pages/worker/WorkersPage.jsx";
 // import the submitBid page
 import SubmitBidPage from "./modules/bids/components/SubmitBid.jsx";
 // import the ViewSubmittedBids page that allow the contractors to see their submitted bids
@@ -100,6 +102,7 @@ function Router() {
             element={<SubmitBidPage />}
           />
           <Route path="my-bids" element={<MyBidsPage />} />
+          <Route path="workers" element={<WorkersPage />} />
         </Route>
         <Route path="/client-profile" element={<ClientProfile />} />
 

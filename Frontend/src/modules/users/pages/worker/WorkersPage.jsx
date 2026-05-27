@@ -11,10 +11,14 @@ import {
   Button,
 } from "react-bootstrap";
 
-// import worker service
-import workerService from "../workerService";
+import { useNavigate } from "react-router-dom";
+
+// import user service
+import userService from "../../userService";
 
 export default function WorkersPage() {
+  const navigate = useNavigate();
+
   // workers
   const [workers, setWorkers] = useState([]);
 
@@ -24,45 +28,22 @@ export default function WorkersPage() {
   // error
   const [error, setError] = useState("");
 
-  // filters
-  const [filters, setFilters] = useState({
-    skill: "",
-    location: "",
-    availability: "",
-    experience: "",
-  });
+  // search
+  const [searchText, setSearchText] = useState("");
+
+  const [filterType, setFilterType] = useState("skill");
 
   // =========================
-  // handle filter change
-  // =========================
-
-  const handleFilterChange = (e) => {
-    setFilters({
-      ...filters,
-
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  // =========================
-  // fetch workers
+  // fetch all workers
   // =========================
 
   const fetchWorkers = async () => {
     try {
       setDataLoading(true);
 
-      const query = new URLSearchParams({
-        skill: filters.skill,
+      setError("");
 
-        location: filters.location,
-
-        availability: filters.availability,
-
-        experience: filters.experience,
-      });
-
-      const res = await workerService.getWorkers(query);
+      const res = await userService.getWorkers();
 
       const data = await res.json();
 
@@ -81,12 +62,44 @@ export default function WorkersPage() {
   };
 
   // =========================
-  // load workers
+  // search workers
+  // =========================
+
+  const handleSearch = async () => {
+    try {
+      setDataLoading(true);
+
+      setError("");
+
+      const query = new URLSearchParams({
+        [filterType]: searchText,
+      });
+
+      const res = await userService.getWorkersByFilter(query);
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setWorkers(data.workers);
+      } else {
+        setError(data.message);
+      }
+    } catch (error) {
+      console.error(error);
+
+      setError("Failed to search workers");
+    } finally {
+      setDataLoading(false);
+    }
+  };
+
+  // =========================
+  // initial load
   // =========================
 
   useEffect(() => {
     fetchWorkers();
-  }, [filters]);
+  }, []);
 
   // =========================
   // UI
@@ -94,14 +107,14 @@ export default function WorkersPage() {
 
   return (
     <div>
-      {/* page title */}
+      {/* header */}
       <div className="mb-4">
         <h2>Available Workers</h2>
 
-        <p className="text-muted">Find skilled workers for your project</p>
+        <p className="text-muted">Find workers for your project</p>
       </div>
 
-      {/* filters */}
+      {/* search section */}
       <Card
         className="
           shadow-sm
@@ -109,53 +122,48 @@ export default function WorkersPage() {
         "
       >
         <Card.Body>
-          <Row>
-            {/* skill */}
+          <Row className="g-3">
+            {/* filter */}
             <Col md={3}>
-              <Form.Control
-                type="text"
-                name="skill"
-                placeholder="Skill"
-                value={filters.skill}
-                onChange={handleFilterChange}
-              />
-            </Col>
+              <Form.Label>Filter By</Form.Label>
 
-            {/* location */}
-            <Col md={3}>
-              <Form.Control
-                type="text"
-                name="location"
-                placeholder="Location"
-                value={filters.location}
-                onChange={handleFilterChange}
-              />
-            </Col>
-
-            {/* availability */}
-            <Col md={3}>
               <Form.Select
-                name="availability"
-                value={filters.availability}
-                onChange={handleFilterChange}
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
               >
-                <option value="">Availability</option>
+                <option value="skill">Skill</option>
 
-                <option value="Available">Available</option>
+                <option value="location">Location</option>
 
-                <option value="Unavailable">Busy</option>
+                <option value="experience">Experience</option>
+
+                <option value="availability">Availability</option>
               </Form.Select>
             </Col>
 
-            {/* experience */}
-            <Col md={3}>
+            {/* input */}
+            <Col md={7}>
+              <Form.Label>Search</Form.Label>
+
               <Form.Control
-                type="number"
-                name="experience"
-                placeholder="Min Experience"
-                value={filters.experience}
-                onChange={handleFilterChange}
+                type="text"
+                placeholder={`Search by ${filterType}`}
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
               />
+            </Col>
+
+            {/* button */}
+            <Col md={2}>
+              <Form.Label className="d-block">&nbsp;</Form.Label>
+
+              <Button
+                variant="primary"
+                className="w-100"
+                onClick={handleSearch}
+              >
+                Search
+              </Button>
             </Col>
           </Row>
         </Card.Body>
@@ -164,7 +172,7 @@ export default function WorkersPage() {
       {/* loading */}
       {dataLoading && (
         <div className="text-center">
-          <Spinner />
+          <Spinner animation="border" />
         </div>
       )}
 
@@ -176,7 +184,7 @@ export default function WorkersPage() {
         <Alert variant="info">No workers found</Alert>
       )}
 
-      {/* worker cards */}
+      {/* workers */}
       <Row>
         {workers.map((worker) => (
           <Col md={6} lg={4} key={worker.user_id} className="mb-4">
@@ -187,72 +195,74 @@ export default function WorkersPage() {
                 "
             >
               <Card.Body>
-                {/* top */}
+                {/* image */}
                 <div
                   className="
-                      d-flex
-                      align-items-center
+                      text-center
                       mb-3
                     "
                 >
                   <img
                     src={worker.profile_image}
                     alt="worker"
-                    width="70"
-                    height="70"
+                    width="90"
+                    height="90"
                     className="
                         rounded-circle
-                        me-3
                       "
                   />
-
-                  <div>
-                    <h5 className="mb-1">{worker.full_name}</h5>
-
-                    <Badge bg="primary">{worker.primary_skill}</Badge>
-                  </div>
                 </div>
 
-                {/* details */}
+                {/* name */}
+                <h5
+                  className="
+                      text-center
+                    "
+                >
+                  {worker.full_name}
+                </h5>
+
+                {/* skill */}
+                <div
+                  className="
+                      text-center
+                      mb-3
+                    "
+                >
+                  <Badge bg="primary">{worker.primary_skill}</Badge>
+                </div>
+
+                {/* experience */}
                 <p>
                   <strong>Experience:</strong> {worker.experience_years} years
                 </p>
 
+                {/* location */}
                 <p>
-                  <strong>Skill Level:</strong> {worker.skill_level}
-                </p>
-
-                <p>
-                  <strong>Other Skills:</strong> {worker.other_skills}
-                </p>
-
-                <p>
-                  <strong>Preferred Location:</strong>{" "}
-                  {worker.preferred_location}
-                </p>
-
-                <p>
-                  <strong>Expected Wage:</strong> ETB {worker.expected_wage}
-                  /day
+                  <strong>Location:</strong> {worker.preferred_location}
                 </p>
 
                 {/* availability */}
-                <Badge
-                  bg={
-                    worker.availability === "Available"
-                      ? "success"
-                      : "secondary"
-                  }
-                >
-                  {worker.availability}
-                </Badge>
-
-                {/* button */}
-                <div className="mt-3">
-                  <Button variant="outline-primary" className="w-100">
-                    View Profile
-                  </Button>
+                <div className="mb-3">
+                  <Badge
+                    bg={
+                      worker.availability === "available"
+                        ? "success"
+                        : "secondary"
+                    }
+                  >
+                    {worker.availability}
+                  </Badge>
                 </div>
+
+                {/* details button */}
+                <Button
+                  variant="outline-primary"
+                  className="w-100"
+                  onClick={() => navigate(`/workers/${worker.user_id}`)}
+                >
+                  View Details
+                </Button>
               </Card.Body>
             </Card>
           </Col>
