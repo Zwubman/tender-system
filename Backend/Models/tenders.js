@@ -4,7 +4,6 @@ import BOQItem from "./boq_items.js";
 import Bid from "./bids.js";
 import WorkerApplication from "./worker_applications.js";
 import WorkerHiring from "./worker_hiring.js";
-import WorkerRating from "./worker_ratings.js";
 
 const Tender = sequelize.define(
   "Tender",
@@ -104,14 +103,5 @@ WorkerHiring.belongsTo(Tender, {
   onDelete: "CASCADE",
 });
 
-Tender.hasMany(WorkerRating, {
-  foreignKey: "tender_id",
-  onDelete: "CASCADE",
-});
-
-WorkerRating.belongsTo(Tender, {
-  foreignKey: "tender_id",
-  onDelete: "CASCADE",
-});
 
 export default Tender;

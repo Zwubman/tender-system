@@ -25,14 +25,6 @@ const WorkerRating = sequelize.define(
         key: "user_id",
       },
     },
-    tender_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      references: {
-        model: "tenders",
-        key: "tender_id",
-      },
-    },
     rating: {
       type: DataTypes.INTEGER,
       validate: {

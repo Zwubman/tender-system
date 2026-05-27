@@ -4,6 +4,8 @@ import WorkerHiring from "../Models/worker_hiring.js";
 import Role from "../Models/roles.js";
 import UserRole from "../Models/user_roles.js";
 import User from "../Models/users.js";
+import WorkerRating from "../Models/worker_ratings.js";
+
 
 export const create_worker_profile = async (req, res) => {
   try {
@@ -237,4 +239,98 @@ export const delete_worker_profile = async (req, res) => {
   } catch (error) {
     return res.status(400).json({ success: false, message: error.message });
   }
+};
+
+
+
+// To submit a rating for a worker
+export const rate_worker = async (req, res) => {
+    try {
+        const user_id = req.user.user_id;
+        const id = req.params.id;
+        const { rating, comment } = req.body;
+
+        const user = await User.findOne({
+            where: { user_id: user_id, status: "active" },
+        });
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found.",
+            });
+        }
+
+        const worker = await WorkerProfile.findOne({
+            where: { worker_id: id },
+        });
+
+        if (!worker) {
+            return res.status(404).json({
+                success: false,
+                message: "Worker profile not found.",
+            });
+        }
+        
+        const worker_rating = await WorkerRating.create({
+            worker_id: worker.worker_id,
+            rated_by_user_id: user.user_id,
+            rating,
+            comment,
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: "Worker rated successfully",
+            rating: worker_rating,
+        });
+    } catch (error) {
+        console.error("Error rating worker:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+// To retrieve ratings for a worker
+export const get_worker_ratings = async (req, res) => {
+    try {
+        const id = req.params.id;
+
+        const worker = await WorkerProfile.findOne({
+            where: { worker_id: id },
+        });
+
+        if (!worker) {
+            return res.status(404).json({
+                success: false,
+                message: "Worker profile not found.",
+            });
+        }
+
+        const ratings = await WorkerRating.findAll({
+            where: { worker_id: worker.worker_id },
+            include: [
+                {
+                    model: User,
+                    attributes: ["user_id", "full_name"],
+                },
+            ],
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Worker ratings fetched successfully",
+            ratings,
+        });
+    } catch (error) {
+        console.error("Error fetching worker ratings:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
 };
