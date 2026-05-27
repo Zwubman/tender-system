@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-
-import { useParams } from "react-router-dom";
-
+import { useParams, useNavigate } from "react-router-dom";
 import {
   Card,
   Badge,
@@ -13,187 +11,233 @@ import {
   Button,
   Modal,
   Form,
+  Container,
 } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
-// import the useAuth hook from the context to get the user information and the token
 import { useAuth } from "../../../context/AuthContext";
-// import the tender service to send the post request to create a new tender
 import tenderService from "../tenderService";
-// the tender details function
+
 export default function TenderDetails() {
   const { tenderId } = useParams();
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
 
   const [tender, setTender] = useState(null);
-
   const [dataLoading, setDataLoading] = useState(true);
-
   const [error, setError] = useState("");
-  const navigate = useNavigate();
 
-  // the states to controll the cancelation of the tender
+  // Modal & Loading States
   const [showCancelModal, setShowCancelModal] = useState(false);
-
   const [cancelReason, setCancelReason] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
 
-  const [cancelLoading, setCancelLoading] = useState(false);
-
-  // get the token that is stored in the local storage when the user logs in
-  const { user, loading } = useAuth();
-  let loggedInUserToken = !loading ? user?.token : null;
+  const loggedInUserToken = !loading ? user?.token : null;
   const userRole = user?.user_role;
-  // fetch tender details
+
   useEffect(() => {
     const fetchTender = async () => {
+      if (loading) return;
+      if (!loggedInUserToken) {
+        setError("Authentication required to view system details.");
+        setDataLoading(false);
+        return;
+      }
+
       try {
-        // Critical Guard: Stop right here if Auth is still loading from local storage
-        if (loading) return;
-        // 3. If auth finished loading but there is no user token, show an error and stop
-        if (!loggedInUserToken) {
-          setError("You must be logged in to view your tenders.");
-          setDataLoading(false);
-          return;
-        }
         const res = await tenderService.tenderDetail(
           tenderId,
           loggedInUserToken,
         );
         const data = await res.json();
-
         if (res.ok) {
           setTender(data.tender);
-          console.log("Fetched Tender Details:", data.tender);
         } else {
           setError(data.message);
         }
-      } catch (error) {
-        console.error(error);
-
-        setError("Failed to load tender");
+      } catch (err) {
+        setError("Network error: Failed to fetch tender records.");
       } finally {
         setDataLoading(false);
       }
     };
-
     fetchTender();
   }, [tenderId, loading, loggedInUserToken]);
 
-  // ========================================
-  // the handler function that handle cancel tender
-  // =========================================
   const handleCancelTender = async () => {
+    if (!cancelReason.trim())
+      return alert("Please provide a reason for cancellation.");
     try {
-      setCancelLoading(true);
-
+      setActionLoading(true);
       const res = await tenderService.cancelTender(
         tender.tender_id,
-        {
-          cancellation_reason: cancelReason,
-        },
-
+        { cancellation_reason: cancelReason },
         loggedInUserToken,
       );
-
-      const data = await res.json();
-
       if (res.ok) {
-        setTender({
-          ...tender,
-
-          status: "cancelled",
-        });
-
+        setTender({ ...tender, status: "cancelled" });
         setShowCancelModal(false);
       } else {
-        setError(data.message || "Failed");
+        const data = await res.json();
+        setError(data.message || "Failed to cancel tender.");
       }
-    } catch (error) {
-      console.error(error);
-
-      setError("Server error");
+    } catch (err) {
+      setError("Critical system error during cancellation.");
     } finally {
-      setCancelLoading(false);
+      setActionLoading(false);
     }
   };
-  // loading
+
+  const handlePublishTender = async () => {
+    if (!window.confirm("Move this tender to the public portal?")) return;
+    try {
+      setActionLoading(true);
+      const res = await tenderService.publishTender(
+        tenderId,
+        loggedInUserToken,
+      );
+      if (res.ok) {
+        setTender({ ...tender, status: "open" });
+        alert("Operational Alert: Tender is now public.");
+      }
+    } catch (err) {
+      alert("Failed to publish.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   if (loading || dataLoading) {
     return (
-      <div className="text-center mt-5">
-        <Spinner />
-      </div>
+      <Container className="text-center py-5">
+        <Spinner animation="border" variant="primary" />
+        <p className="mt-3 text-muted fw-semibold">
+          Accessing Tender Repository...
+        </p>
+      </Container>
     );
   }
 
-  // error
-  if (error) {
-    return <Alert variant="danger">{error}</Alert>;
-  }
-
-  // no tender
-  if (!tender) {
-    return <Alert variant="warning">Tender not found</Alert>;
-  }
+  if (error)
+    return (
+      <Container className="mt-5">
+        <Alert
+          variant="danger"
+          className="border-start border-4 border-danger shadow-sm"
+        >
+          {error}
+        </Alert>
+      </Container>
+    );
+  if (!tender)
+    return (
+      <Container className="mt-5">
+        <Alert variant="warning">Tender record not found.</Alert>
+      </Container>
+    );
 
   return (
-    <div>
-      {/* header */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>Tender Details</h2>
-
-        <Badge bg="primary">{tender.status}</Badge>
+    <Container className="py-5">
+      {/* Header Section */}
+      <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+        <div>
+          <Badge
+            bg="dark"
+            className="mb-2 px-3 py-2 text-uppercase letter-spacing-1"
+            style={{ fontSize: "0.7rem" }}
+          >
+            Reference ID: {tender.tender_id}
+          </Badge>
+          <h2 className="fw-bold text-dark">{tender.title}</h2>
+        </div>
+        <Badge
+          bg={
+            tender.status === "open"
+              ? "success"
+              : tender.status === "draft"
+                ? "warning"
+                : "danger"
+          }
+          className="p-2 px-4 shadow-sm"
+          style={{ fontSize: "1rem" }}
+        >
+          {tender.status.toUpperCase()}
+        </Badge>
       </div>
 
       <Row>
-        {/* tender info */}
+        {/* Main Content */}
         <Col lg={8}>
-          <Card className="shadow-sm mb-4">
-            <Card.Body>
-              <h3>{tender.title}</h3>
-
-              <p className="mt-3">{tender.description}</p>
-
-              <hr />
-
-              <p>
-                <strong>Location:</strong> {tender.location}
+          <Card className="border-0 shadow-sm mb-4 overflow-hidden">
+            <div className="bg-primary py-1"></div>
+            <Card.Body className="p-4">
+              <h5 className="fw-bold text-secondary mb-3">Project Overview</h5>
+              <p
+                className="text-muted leading-relaxed"
+                style={{ whiteSpace: "pre-line" }}
+              >
+                {tender.description}
               </p>
 
-              <p>
-                <strong>Deadline:</strong>{" "}
-                {new Date(tender.deadline).toLocaleString()}
-              </p>
+              <hr className="my-4" />
 
-              <p>
-                <strong>Bid Security:</strong>{" "}
-                {tender.bid_security_required_amount}
-              </p>
+              <Row className="g-3">
+                <Col sm={4}>
+                  <div className="p-3 bg-light rounded border text-center">
+                    <small className="text-uppercase text-secondary d-block mb-1">
+                      Deadline
+                    </small>
+                    <span className="fw-bold text-danger">
+                      {new Date(tender.deadline).toLocaleDateString()}
+                    </span>
+                  </div>
+                </Col>
+                <Col sm={4}>
+                  <div className="p-3 bg-light rounded border text-center">
+                    <small className="text-uppercase text-secondary d-block mb-1">
+                      Location
+                    </small>
+                    <span className="fw-bold text-dark">{tender.location}</span>
+                  </div>
+                </Col>
+                <Col sm={4}>
+                  <div className="p-3 bg-light rounded border text-center">
+                    <small className="text-uppercase text-secondary d-block mb-1">
+                      Security Bond
+                    </small>
+                    <span className="fw-bold text-primary">
+                      {tender.bid_security_required_amount} ETB
+                    </span>
+                  </div>
+                </Col>
+              </Row>
             </Card.Body>
           </Card>
 
-          {/* BOQ */}
-          <Card className="shadow-sm">
-            <Card.Body>
-              <h4 className="mb-4">BOQ Items</h4>
-
-              <Table bordered hover responsive>
-                <thead>
+          {/* BOQ Table */}
+          <Card className="border-0 shadow-sm">
+            <Card.Body className="p-4">
+              <h5 className="fw-bold text-secondary mb-4">
+                Bill of Quantities (BOQ)
+              </h5>
+              <Table responsive hover className="align-middle">
+                <thead className="bg-light">
                   <tr>
-                    <th>#</th>
-                    <th>Description</th>
-                    <th>Unit</th>
-                    <th>Quantity</th>
+                    <th className="border-0">Item #</th>
+                    <th className="border-0">Technical Specification</th>
+                    <th className="border-0 text-center">Unit</th>
+                    <th className="border-0 text-center">Quantity</th>
                   </tr>
                 </thead>
-
                 <tbody>
                   {tender.BOQItems?.map((item) => (
                     <tr key={item.boq_id}>
-                      <td>{item.item_no}</td>
-
-                      <td>{item.description}</td>
-
-                      <td>{item.unit}</td>
-
-                      <td>{item.quantity}</td>
+                      <td className="fw-bold text-primary">{item.item_no}</td>
+                      <td className="text-dark">{item.description}</td>
+                      <td className="text-center">
+                        <Badge bg="secondary" text="white">
+                          {item.unit}
+                        </Badge>
+                      </td>
+                      <td className="text-center fw-bold">{item.quantity}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -202,111 +246,128 @@ export default function TenderDetails() {
           </Card>
         </Col>
 
-        {/* actions */}
+        {/* Action Panel */}
         <Col lg={4}>
-          <Card className="shadow-sm">
-            <Card.Body>
-              <h4 className="mb-4">Actions</h4>
-
+          <Card
+            className="border-0 shadow-sm sticky-top"
+            style={{ top: "2rem" }}
+          >
+            <Card.Body className="p-4">
+              <h5 className="fw-bold text-dark mb-4">Operational Actions</h5>
               <div className="d-grid gap-3">
                 {userRole === "client" && (
                   <>
-                    {/* draft */}
                     {tender.status === "draft" && (
                       <>
                         <Button
                           variant="warning"
+                          className="fw-bold py-2"
                           href={`/tenders/${tender.tender_id}/edit`}
                         >
-                          Edit Tender
+                          Edit Specifications
                         </Button>
-
-                        <Button variant="success">Publish Tender</Button>
+                        <Button
+                          variant="success"
+                          className="fw-bold py-2 shadow-sm"
+                          onClick={handlePublishTender}
+                          disabled={actionLoading}
+                        >
+                          {actionLoading ? (
+                            <Spinner size="sm" />
+                          ) : (
+                            "Publish to Portal"
+                          )}
+                        </Button>
                       </>
                     )}
 
-                    {/* open */}
                     {(tender.status === "open" ||
                       tender.status === "published") && (
                       <Button
                         variant="primary"
+                        className="fw-bold py-2 shadow-sm"
                         href={`/tenders/${tender.tender_id}/bids`}
                       >
-                        View Submitted Bids
+                        Review Submitted Bids
                       </Button>
                     )}
-                    {tender.status !== "cancelled" &&
-                      tender.status !== "awarded" && (
-                        <Button
-                          variant="danger"
-                          onClick={() => setShowCancelModal(true)}
-                        >
-                          {" "}
-                          Cancel Tender{" "}
-                        </Button>
-                      )}
+
+                    {!["cancelled", "awarded"].includes(tender.status) && (
+                      <Button
+                        variant="outline-danger"
+                        className="mt-2 fw-semibold"
+                        onClick={() => setShowCancelModal(true)}
+                      >
+                        Terminate Tender Process
+                      </Button>
+                    )}
                   </>
                 )}
-                {/* ======================= */}
-                {/* if the user is the contractor */}
-                {/* ======================= */}
+
                 {userRole === "contractor" && tender.status === "open" && (
                   <Button
                     variant="success"
+                    className="fw-bold py-3 shadow"
                     onClick={() =>
                       navigate(`/tenders/${tender.tender_id}/submit-bids`)
                     }
                   >
-                    Submit Bid
+                    Place Competitive Bid
                   </Button>
                 )}
+              </div>
+
+              <div className="mt-4 p-3 bg-light rounded">
+                <small className="text-muted d-block text-center">
+                  Only authorized personnel can modify this tender record. All
+                  actions are logged.
+                </small>
               </div>
             </Card.Body>
           </Card>
         </Col>
       </Row>
-      {/* =================== */}
-      {/* The MODAL that displayed to execute the cancelation process */}
+
+      {/* Cancellation Modal */}
       <Modal
         show={showCancelModal}
         onHide={() => setShowCancelModal(false)}
         centered
+        border="0"
       >
-        <Modal.Header closeButton>
-          <Modal.Title>Cancel Tender</Modal.Title>
+        <Modal.Header closeButton className="bg-danger text-white">
+          <Modal.Title className="fw-bold">Confirm Termination</Modal.Title>
         </Modal.Header>
-
-        <Modal.Body>
-          <Alert variant="warning">
-            This action will stop the procurement process.
+        <Modal.Body className="p-4">
+          <Alert variant="danger">
+            <strong>Warning:</strong> This will immediately notify all bidders
+            and stop the procurement cycle.
           </Alert>
-
           <Form.Group>
-            <Form.Label>Cancellation Reason</Form.Label>
-
+            <Form.Label className="fw-bold">Termination Reason</Form.Label>
             <Form.Control
               as="textarea"
               rows={4}
+              placeholder="Provide a detailed reason for cancellation..."
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}
             />
           </Form.Group>
         </Modal.Body>
-
-        <Modal.Footer>
+        <Modal.Footer className="bg-light border-0">
           <Button variant="secondary" onClick={() => setShowCancelModal(false)}>
-            Close
+            Keep Active
           </Button>
-
           <Button
             variant="danger"
+            className="fw-bold px-4"
             onClick={handleCancelTender}
-            disabled={cancelLoading}
+            disabled={actionLoading}
           >
-            {cancelLoading ? "Cancelling..." : "Confirm Cancellation"}
+            {actionLoading ? <Spinner size="sm" /> : "Execute Cancellation"}
           </Button>
         </Modal.Footer>
       </Modal>
-    </div>
+    </Container>
   );
 }

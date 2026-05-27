@@ -34,7 +34,10 @@ const submitBid = async (tenderId, formData, loggedInUserToken) => {
     body: formData,
   };
 
-  const response = await apiFetch(`/tenders/${tenderId}/bids`, requestOptions);
+  const response = await apiFetch(
+    `/tenders/${tenderId}/submit-bids`,
+    requestOptions,
+  );
   return response;
 };
 // the frontend service function that send the request to retrive bids of the contractior
