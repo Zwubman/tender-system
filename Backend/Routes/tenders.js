@@ -22,7 +22,7 @@ router.get("/:id", get_tender_details);
 router.post("/:id/boq-items", add_boq_item);
 router.get("/:id/boq-items", get_tender_boq_items);
 router.post(
-  "/:id/bids",
+  "/:id/submit-bids",
   authenticate,
   requireRole("Contractor", "Admin"),
   upload.fields([
