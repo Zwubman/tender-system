@@ -8,6 +8,7 @@ import {
   submit_bid,
   get_tender_bids,
   publish_tender,
+  get_open_tenders,
 } from "../Controllers/tenders.js";
 import { authenticate, requireRole } from "../Middlewares/auth.js";
 import upload from "../Middlewares/upload.js";
@@ -15,8 +16,9 @@ import upload from "../Middlewares/upload.js";
 const router = express.Router();
 
 router.post("/", authenticate, create_tender);
-router.get("/:id", get_tender_details);
+router.get("/open", get_open_tenders);
 router.get("/", get_client_tenders);
+router.get("/:id", get_tender_details);
 router.post("/:id/boq-items", add_boq_item);
 router.get("/:id/boq-items", get_tender_boq_items);
 router.post(
@@ -27,10 +29,9 @@ router.post(
     { name: "technical_document", maxCount: 1 },
     { name: "guarantee_document", maxCount: 1 },
   ]),
-  submit_bid
+  submit_bid,
 );
 router.get("/:id/bids", get_tender_bids);
 router.patch("/:id/publish", publish_tender);
-
 
 export default router;

@@ -113,3 +113,55 @@ export const get_bid_details = async (req, res) => {
     });
   }
 };
+
+// To retrieve contractor's bid history
+export const get_contractor_bids = async (req, res) => {
+  try {
+    const { contractor_id} = req.query;
+
+    const user = await User.findOne({
+      where: { user_id: contractor_id },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    const contractor = await ContractorProfile.findOne({
+      where: { user_id: user.user_id },
+    });
+
+    if (!contractor) {
+      return res.status(404).json({
+        success: false,
+        message: "Contractor profile not found.",
+      });
+    }
+
+    const bids = await Bid.findAll({
+      where: { contractor_id: contractor.contractor_id },
+      include: [
+        {
+          model: Tender,
+          attributes: ["tender_id", "title", "deadline", "location"],
+        },
+      ],
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Contractor bid history fetched successfully",
+      bids,
+    });
+  } catch (error) {
+    console.error("Error fetching contractor bid history:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
