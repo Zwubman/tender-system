@@ -499,7 +499,7 @@ export const select_bid = async (req, res) => {
     const {bidId} = req.params.id;
     const { selection_reason } = req.body;
 
-    const bid = await Bid.where({ bid_id: bidId });
+    const bid = await Bid.findOne({ where: { bid_id: bidId } });
     if(!bid) {
       return res.status(404).json({
         success: false,
