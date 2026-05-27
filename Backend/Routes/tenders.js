@@ -9,6 +9,8 @@ import {
   get_tender_bids,
   publish_tender,
   get_open_tenders,
+  delete_tender,
+  update_tender,
 } from "../Controllers/tenders.js";
 import { authenticate, requireRole } from "../Middlewares/auth.js";
 import upload from "../Middlewares/upload.js";
@@ -32,5 +34,7 @@ router.post(
 );
 router.get("/:id/bids", get_tender_bids);
 router.patch("/:id/publish", publish_tender);
+router.delete("/:id", delete_tender);
+router.put("/:id", authenticate, requireRole("client"), update_tender);
 
 export default router;

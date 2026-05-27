@@ -640,3 +640,124 @@ export const get_open_tenders = async (req, res) => {
     });
   }
 };
+
+
+// Delete a tender
+export const delete_tender = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const tender = await Tender.findByPk(id);
+
+    if (!tender) {
+      return res.status(404).json({
+        success: false,
+        message: "Tender not found.",
+      });
+    }
+
+    await tender.destroy();
+
+    return res.status(200).json({
+      success: true,
+      message: "Tender deleted successfully.",
+    });
+  } catch (error) {
+    console.error("Error deleting tender:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Update a tender
+export const update_tender = async (req, res) => {
+  try {
+    const tender_id = req.params.id;
+
+    const {
+      title,
+      description,
+      location,
+      bid_security_requirement_amount,
+      deadline,
+    } = req.body;
+
+    const user_id = req.user.user_id;
+
+    // FIND USER
+    const user = await User.findByPk(user_id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    // FIND CLIENT PROFILE
+    const client_profile = await ClientProfile.findOne({
+      where: { user_id },
+    });
+
+    if (!client_profile) {
+      return res.status(404).json({
+        success: false,
+        message: "Client profile not found.",
+      });
+    }
+
+    // FIND TENDER
+    const tender = await Tender.findOne({
+      where: {
+        tender_id,
+        client_id: client_profile.client_id,
+      },
+    });
+
+    if (!tender) {
+      return res.status(404).json({
+        success: false,
+        message: "Tender not found.",
+      });
+    }
+
+    // CHECK IF ANY BID EXISTS
+    const existing_bid = await Bid.findOne({
+      where: { tender_id },
+    });
+
+    // IF BID EXISTS => BLOCK UPDATE
+    if (existing_bid) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Tender cannot be updated because bids have already been submitted.",
+      });
+    }
+
+    // UPDATE TENDER
+    await tender.update({
+      title: title || tender.title,
+      description: description || tender.description,
+      location: location || tender.location,
+      bid_security_required_amount:
+        bid_security_requirement_amount ||
+        tender.bid_security_required_amount,
+      deadline: deadline || tender.deadline,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Tender updated successfully",
+      tender,
+    });
+  } catch (error) {
+    console.error("Error updating tender:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

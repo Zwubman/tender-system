@@ -32,7 +32,7 @@ const Bid = sequelize.define(
       },
     },
     status: {
-      type: DataTypes.ENUM("submitted", "under_review", "accepted", "rejected"),
+      type: DataTypes.ENUM("submitted", "under_review", "accepted", "rejected", "cancelled"),
       defaultValue: "submitted",
     },
     created_at: {
