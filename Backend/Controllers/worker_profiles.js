@@ -334,3 +334,65 @@ export const get_worker_ratings = async (req, res) => {
         });
     }
 };
+
+
+// Worker hiring by contractor
+export const hire_worker = async (req, res) => {
+  try {
+    const user_id = req.user.user_id;
+    const id = req.params.id;
+    const { messages } = req.body;
+
+    const user = await User.findOne({
+      where: { user_id: user_id, status: "active" },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    const worker = await WorkerProfile.findOne({
+      where: { worker_id: id },
+    });
+
+    if (!worker) {
+      return res.status(404).json({
+        success: false,
+        message: "Worker profile not found.",
+      });
+    }
+
+    const contractor = await ContractorProfile.findOne({
+      where: { user_id: user.user_id },
+    });
+
+    if (!contractor) {
+      return res.status(404).json({
+        success: false,
+        message: "Contractor profile not found.",
+      });
+    }
+
+    const worker_hiring = await WorkerHiring.create({
+      contractor_id: contractor.contractor_id,
+      worker_id: worker.worker_id,
+      messages,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Worker hired successfully",
+      hiring: worker_hiring,
+    });
+  } catch (error) {
+    console.error("Error hiring worker:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

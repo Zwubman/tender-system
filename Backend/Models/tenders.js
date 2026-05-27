@@ -3,7 +3,6 @@ import sequelize from "../Configs/config.js";
 import BOQItem from "./boq_items.js";
 import Bid from "./bids.js";
 import WorkerApplication from "./worker_applications.js";
-import WorkerHiring from "./worker_hiring.js";
 
 const Tender = sequelize.define(
   "Tender",
@@ -89,16 +88,6 @@ Tender.hasMany(WorkerApplication, {
 });
 
 WorkerApplication.belongsTo(Tender, {
-  foreignKey: "tender_id",
-  onDelete: "CASCADE",
-});
-
-Tender.hasMany(WorkerHiring, {
-  foreignKey: "tender_id",
-  onDelete: "CASCADE",
-});
-
-WorkerHiring.belongsTo(Tender, {
   foreignKey: "tender_id",
   onDelete: "CASCADE",
 });

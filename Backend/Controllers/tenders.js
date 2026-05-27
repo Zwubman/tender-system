@@ -7,6 +7,7 @@ import BidSecurity from "../Models/bid_securities.js";
 import ClientProfile from "../Models/client_profiles.js";
 import User from "../Models/users.js";
 import sequelize from "../Configs/config.js";
+import ContractorProfile from "../Models/contractor_profiles.js";
 
 export const create_tender = async (req, res) => {
   try {
@@ -264,7 +265,7 @@ export const submit_bid = async (req, res) => {
 
   try {
     const tender_id = req.params.id;
-    const contractor_id = req.user.id;
+    const user_id = req.user.user_id;
 
     // Destructure request body
     const {
@@ -279,6 +280,32 @@ export const submit_bid = async (req, res) => {
       expiry_date,
       financial_items,
     } = req.body;
+
+    const user = await User.findByPk(user_id);
+    if (!user) {
+      await t.rollback();
+
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+    console.log("User found:", user.email);
+
+    const contractor_profile = await ContractorProfile.findOne({
+      where: { user_id },
+    });
+
+    if (!contractor_profile) {
+      await t.rollback();
+
+      return res.status(404).json({
+        success: false,
+        message: "Contractor profile not found.",
+      });
+    }
+
+    const contractor_id = contractor_profile.contractor_id;
 
     // Prevent duplicate bid
     const existing_bid = await Bid.findOne({
