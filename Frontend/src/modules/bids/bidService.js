@@ -20,7 +20,7 @@ const fetchBidDetail = async (bidId, loggedInUserToken) => {
     },
   };
 
-  const response = await apiFetch(`bids/${bidId}`, requestOptions);
+  const response = await apiFetch(`/bids/${bidId}`, requestOptions);
 
   return response;
 };

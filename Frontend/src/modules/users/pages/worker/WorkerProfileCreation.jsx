@@ -13,8 +13,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import userService from "../../userService";
 function WorkerProfile() {
   const [formData, setFormData] = useState({
-    gender: "",
-    age: "",
     primary_skill: "",
     other_skills: "",
     experience_years: "",
@@ -24,7 +22,7 @@ function WorkerProfile() {
     preferred_location: "",
     expected_wage: "",
     bio: "",
-    has_certificate: "no",
+    has_certification: "no",
   });
   const [files, setFiles] = useState({
     experience_document: null,
@@ -66,7 +64,7 @@ function WorkerProfile() {
       form.append("experience_document", files.experience_document);
     }
     form.append("user_id", user.user_id);
-    if (formData.has_certificate === "yes" && files.certificates_files) {
+    if (formData.has_certification === "yes" && files.certificates_files) {
       form.append("certificate_file", files.certificates_files);
     }
 
@@ -199,7 +197,7 @@ function WorkerProfile() {
               <Form.Group className="mb-3">
                 <Form.Label>Do you have certification?</Form.Label>
                 <Form.Select
-                  name="has_certificate"
+                  name="has_certification"
                   onChange={handleChange}
                   required
                 >
@@ -208,7 +206,7 @@ function WorkerProfile() {
                 </Form.Select>
               </Form.Group>
 
-              {formData.has_certificate === "true" && (
+              {formData.has_certification === "true" && (
                 <Form.Group className="mb-3">
                   <Form.Label>Upload Certificate</Form.Label>
                   <Form.Control

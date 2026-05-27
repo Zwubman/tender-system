@@ -31,7 +31,7 @@ const getWorkers = async (query) => {
 };
 // the frontend service function that send the get request to retrive the workers by the filter query parameters
 const getWorkersByFilter = async (query) => {
-  const response = await apiFetch(`/workers?${query}`);
+  const response = await apiFetch(`/workers/search?${query}`);
   return response;
 };
 // export all the functions
