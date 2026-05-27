@@ -90,7 +90,7 @@ export const get_bid_details = async (req, res) => {
 
       technical_proposal: bid.TechnicalProposal,
 
-      bid_security: bid.BidSecurities,
+      bid_security: bid.BidSecurity,
       financial_visible,
 
       financial_proposal: financial_visible ? bid.BidItems : [],

@@ -67,7 +67,7 @@ BidItem.belongsTo(Bid, {
 });
 
 // One bid → many securities (safe design)
-Bid.hasMany(BidSecurity, {
+Bid.hasOne(BidSecurity, {
   foreignKey: "bid_id",
   onDelete: "CASCADE",
 });
