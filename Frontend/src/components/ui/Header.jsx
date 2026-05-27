@@ -8,9 +8,17 @@ import {
   Button,
   Card,
 } from "react-bootstrap";
+// import the authentication context to get the user role
+import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 const Header = () => {
   const navigate = useNavigate();
+  const { isLogged, logout } = useAuth();
+  // the function to handle logout
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
   return (
     <>
       {/* 1. HEADER (Navbar) */}
@@ -31,20 +39,32 @@ const Header = () => {
               <Nav.Link href="#features">Features</Nav.Link>
               <Nav.Link href="#about">About System</Nav.Link>
               <Nav.Link href="#contact">Contact</Nav.Link>
-              <Button
-                variant="primary"
-                className="ms-lg-3 px-4"
-                onClick={() => navigate("/register")}
-              >
-                Sign up
-              </Button>
-              <Button
-                variant="primary"
-                className="ms-lg-3 px-4"
-                onClick={() => navigate("/login")}
-              >
-                Login
-              </Button>
+              {isLogged ? (
+                <Button
+                  variant="primary"
+                  className="ms-lg-3 px-4"
+                  onClick={handleLogout}
+                >
+                  Logout
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    variant="primary"
+                    className="ms-lg-3 px-4"
+                    onClick={() => navigate("/register")}
+                  >
+                    Sign up
+                  </Button>
+                  <Button
+                    variant="primary"
+                    className="ms-lg-3 px-4"
+                    onClick={() => navigate("/login")}
+                  >
+                    Login
+                  </Button>
+                </>
+              )}
             </Nav>
           </Navbar.Collapse>
         </Container>
