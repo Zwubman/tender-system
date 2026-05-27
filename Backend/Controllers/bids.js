@@ -9,7 +9,6 @@ import TechnicalProposal from "../Models/technical_proposals.js";
 import BidSecurity from "../Models/bid_securities.js";
 import BidItem from "../Models/bid_items.js";
 
-
 //Get the detail information of the specific bid that submitted to the tender
 export const get_bid_details = async (req, res) => {
   try {
@@ -61,12 +60,7 @@ export const get_bid_details = async (req, res) => {
 
         {
           model: BidItem,
-          attributes: [
-            "bid_item_id",
-            "boq_id",
-            "unit_price",
-            "total_price",
-          ],
+          attributes: ["bid_item_id", "boq_id", "unit_price", "total_price"],
         },
       ],
     });
@@ -96,8 +90,7 @@ export const get_bid_details = async (req, res) => {
 
       technical_proposal: bid.TechnicalProposal,
 
-      bid_security: bid.BidSecurity,
-
+      bid_security: bid.BidSecurities,
       financial_visible,
 
       financial_proposal: financial_visible ? bid.BidItems : [],
@@ -121,7 +114,7 @@ export const get_bid_details = async (req, res) => {
 // To retrieve contractor's bid history
 export const get_contractor_bids = async (req, res) => {
   try {
-    const { contractor_id} = req.query;
+    const { contractor_id } = req.query;
 
     const user = await User.findOne({
       where: { user_id: contractor_id },
@@ -169,8 +162,6 @@ export const get_contractor_bids = async (req, res) => {
     });
   }
 };
-
-
 
 // UPDATE BID
 export const update_bid = async (req, res) => {
@@ -318,9 +309,7 @@ export const update_bid = async (req, res) => {
       deleteOldFile(technicalProposal?.document_url);
 
       // SAVE NEW FILE
-      technical_document = generateFileUrl(
-        req.files.technical_document[0],
-      );
+      technical_document = generateFileUrl(req.files.technical_document[0]);
     }
 
     // HANDLE GUARANTEE DOCUMENT UPDATE
@@ -331,9 +320,7 @@ export const update_bid = async (req, res) => {
       deleteOldFile(bidSecurity?.document_url);
 
       // SAVE NEW FILE
-      guarantee_document = generateFileUrl(
-        req.files.guarantee_document[0],
-      );
+      guarantee_document = generateFileUrl(req.files.guarantee_document[0]);
     }
 
     // UPDATE TECHNICAL PROPOSAL
@@ -428,9 +415,9 @@ export const cancel_bid = async (req, res) => {
       });
     }
 
-    const user_role = await user.findOne({where: {user_id}});
-    
-    if (user_role.name !== "contractor") { 
+    const user_role = await user.findOne({ where: { user_id } });
+
+    if (user_role.name !== "contractor") {
       return res.status(403).json({
         success: false,
         message: "Only contractors can cancel bids.",
