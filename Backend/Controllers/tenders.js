@@ -33,7 +33,7 @@ export const create_tender = async (req, res) => {
       where: { user_id },
     });
 
-    if(!client_profile) {
+    if (!client_profile) {
       return res.status(404).json({
         success: false,
         message: "Client profile not found.",
@@ -58,8 +58,7 @@ export const create_tender = async (req, res) => {
       title,
       description,
       location,
-      bid_security_required_amount:
-        bid_security_requirement_amount,
+      bid_security_required_amount: bid_security_requirement_amount,
       deadline,
       status: "draft",
     });
@@ -69,7 +68,6 @@ export const create_tender = async (req, res) => {
       message: "Tender created successfully",
       tender: new_tender,
     });
-
   } catch (error) {
     console.error(error);
 
@@ -120,7 +118,7 @@ export const get_tender_details = async (req, res) => {
 export const get_client_tenders = async (req, res) => {
   try {
     const { client_id } = req.query;
-
+    console.log("Fetching tenders for client_id:", req.query);
     if (!client_id) {
       return res
         .status(400)
@@ -162,45 +160,104 @@ export const get_client_tenders = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+// the controller function to handle add the boq items to the specific tender
+// export const add_boq_item = async (req, res) => {
+//   try {
+//     console.log("Adding BOQ Item with Data:", req.body);
+//     const id = req.params.id;
+//     const { description, item_no, unit, quantity } = req.body;
 
+//     if (!description || !item_no || !unit || !quantity) {
+//       return res.status(400).json({
+//         error: "Description, item_no, unit, and quantity are required.",
+//       });
+//     }
+
+//     const tender = await Tender.findByPk(id);
+//     if (!tender) {
+//       return res.status(404).json({ error: "Tender not found." });
+//     }
+
+//     const new_boq_item = await BOQItem.create({
+//       tender_id: id,
+//       description,
+//       item_no,
+//       unit,
+//       quantity,
+//     });
+
+//     tender.boq_added = true;
+//     await tender.save();
+
+//     res.status(201).json({
+//       success: true,
+//       message: "BOQ item added successfully",
+//       boq_id: new_boq_item.boq_id,
+//     });
+//   } catch (error) {
+//     console.error("Error adding BOQ item:", error);
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
 export const add_boq_item = async (req, res) => {
   try {
     const id = req.params.id;
-    const { description, item_no, unit, quantity } = req.body;
 
-    if (!description || !item_no || !unit || !quantity) {
+    // 1. Ensure the incoming data is treated as an array
+    const boqItemsArray = Array.isArray(req.body) ? req.body : [req.body];
+
+    if (boqItemsArray.length === 0) {
       return res.status(400).json({
-        error: "Description, item_no, unit, and quantity are required.",
+        success: false,
+        error: "At least one BOQ item is required.",
       });
     }
 
+    // 2. Check if the tender actually exists first
     const tender = await Tender.findByPk(id);
     if (!tender) {
-      return res.status(404).json({ error: "Tender not found." });
+      return res
+        .status(404)
+        .json({ success: false, error: "Tender not found." });
     }
 
-    const new_boq_item = await BOQItem.create({
-      tender_id: id,
-      description,
-      item_no,
-      unit,
-      quantity,
-    });
+    // 3. Carefully validate every item in the array
+    for (const item of boqItemsArray) {
+      if (!item.description || !item.item_no || !item.unit || !item.quantity) {
+        return res.status(400).json({
+          success: false,
+          error:
+            "Each BOQ item must include description, item_no, unit, and quantity.",
+        });
+      }
+    }
 
+    // 4. Map the array data to include the tender_id foreign key for each item
+    const formattedItems = boqItemsArray.map((item) => ({
+      tender_id: id,
+      description: item.description,
+      item_no: item.item_no,
+      unit: item.unit,
+      quantity: item.quantity,
+    }));
+
+    // 5. Perform a bulk database insert
+    const createdItems = await BOQItem.bulkCreate(formattedItems);
+
+    // 6. Update tender status flags
     tender.boq_added = true;
     await tender.save();
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
-      message: "BOQ item added successfully",
-      boq_id: new_boq_item.boq_id,
+      message: `${createdItems.length} BOQ items added successfully`,
+      items: createdItems, // Returns the full list with database IDs
     });
   } catch (error) {
-    console.error("Error adding BOQ item:", error);
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Error adding BOQ items:", error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
-
 // Get the boq of specific tender
 export const get_tender_boq_items = async (req, res) => {
   try {

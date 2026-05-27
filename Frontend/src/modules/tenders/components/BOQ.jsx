@@ -21,17 +21,15 @@ import {
 } from "react-bootstrap";
 
 export default function BOQPage() {
-
   // get tender id
   const { tenderId } = useParams();
-
+  console.log("BOQPage Tender ID:", tenderId);
   const navigate = useNavigate();
 
   // auth
   const { user, loading } = useAuth();
 
-  const loggedInUserToken =
-    !loading ? user?.token : null;
+  const loggedInUserToken = !loading ? user?.token : null;
 
   // boq items
   const [boqItems, setBoqItems] = useState([
@@ -44,27 +42,22 @@ export default function BOQPage() {
   ]);
 
   // loading
-  const [dataLoading, setDataLoading]
-    = useState(false);
+  const [dataLoading, setDataLoading] = useState(false);
 
   // error message
-  const [message, setMessage]
-    = useState("");
+  const [message, setMessage] = useState("");
 
   // boq submission status
-  const [boqSubmitted, setBoqSubmitted]
-    = useState(false);
+  const [boqSubmitted, setBoqSubmitted] = useState(false);
 
   // =========================
   // handle input change
   // =========================
 
   const handleChange = (index, e) => {
-
     const updatedItems = [...boqItems];
 
-    updatedItems[index][e.target.name]
-      = e.target.value;
+    updatedItems[index][e.target.name] = e.target.value;
 
     setBoqItems(updatedItems);
   };
@@ -74,7 +67,6 @@ export default function BOQPage() {
   // =========================
 
   const addRow = () => {
-
     setBoqItems([
       ...boqItems,
 
@@ -92,19 +84,14 @@ export default function BOQPage() {
   // =========================
 
   const removeRow = (index) => {
-
-    const updatedItems =
-      boqItems.filter((_, i) => i !== index);
+    const updatedItems = boqItems.filter((_, i) => i !== index);
 
     // re-number item numbers
-    const renumberedItems =
-      updatedItems.map((item, idx) => ({
+    const renumberedItems = updatedItems.map((item, idx) => ({
+      ...item,
 
-        ...item,
-
-        item_no: idx + 1,
-
-      }));
+      item_no: idx + 1,
+    }));
 
     setBoqItems(renumberedItems);
   };
@@ -114,51 +101,33 @@ export default function BOQPage() {
   // =========================
 
   const handleSubmit = async (e) => {
-
     e.preventDefault();
 
     setDataLoading(true);
 
     setMessage("");
-
     try {
-
-      const res =
-        await tenderService.addBOQItems(
-
-          tenderId,
-          boqItems,
-          loggedInUserToken
-        );
+      const res = await tenderService.addBOQItems(
+        tenderId,
+        boqItems,
+        loggedInUserToken,
+      );
 
       const data = await res.json();
 
       // success
       if (res.ok) {
-
         setBoqSubmitted(true);
 
-        setMessage(
-          data.message ||
-          "BOQ added successfully"
-        );
-
+        setMessage(data.message || "BOQ added successfully");
       } else {
-
-        setMessage(
-          data.message ||
-          "Failed to add BOQ"
-        );
+        setMessage(data.message || "Failed to add BOQ");
       }
-
     } catch (error) {
-
       console.error(error);
 
       setMessage("Server error");
-
     } finally {
-
       setDataLoading(false);
     }
   };
@@ -168,47 +137,30 @@ export default function BOQPage() {
   // =========================
 
   const handlePublishTender = async () => {
-
     try {
-
       setDataLoading(true);
 
-      const res =
-        await tenderService.publishTender(
-          tenderId,
-          loggedInUserToken
-        );
+      const res = await tenderService.publishTender(
+        tenderId,
+        loggedInUserToken,
+      );
 
       const data = await res.json();
 
       if (res.ok) {
-
-        setMessage(
-          "Tender published successfully"
-        );
+        setMessage("Tender published successfully");
 
         setTimeout(() => {
-
           navigate("/my-tenders");
-
         }, 1500);
-
       } else {
-
-        setMessage(
-          data.message ||
-          "Failed to publish tender"
-        );
+        setMessage(data.message || "Failed to publish tender");
       }
-
     } catch (error) {
-
       console.error(error);
 
       setMessage("Server error");
-
     } finally {
-
       setDataLoading(false);
     }
   };
@@ -218,47 +170,25 @@ export default function BOQPage() {
   // =========================
 
   return (
-
     <Container className="mt-5 mb-5">
-
       <Row className="justify-content-center">
-
         <Col md={11}>
-
           <Card className="shadow-lg p-4">
-
-            <h3 className="text-center mb-4">
-
-              Structured BOQ
-
-            </h3>
+            <h3 className="text-center mb-4">Structured BOQ</h3>
 
             {/* message */}
 
-            {message && (
-
-              <Alert variant="info">
-
-                {message}
-
-              </Alert>
-
-            )}
+            {message && <Alert variant="info">{message}</Alert>}
 
             {/* ========================= */}
             {/* SHOW FORM */}
             {/* ========================= */}
 
             {!boqSubmitted ? (
-
               <Form onSubmit={handleSubmit}>
-
                 <Table bordered hover responsive>
-
                   <thead>
-
                     <tr>
-
                       <th>#</th>
 
                       <th>Description</th>
@@ -268,146 +198,91 @@ export default function BOQPage() {
                       <th>Quantity</th>
 
                       <th>Action</th>
-
                     </tr>
-
                   </thead>
 
                   <tbody>
-
                     {boqItems.map((item, index) => (
-
                       <tr key={index}>
-
                         {/* item number */}
 
-                        <td>
-                          {item.item_no}
-                        </td>
+                        <td>{item.item_no}</td>
 
                         {/* description */}
 
                         <td>
-
                           <Form.Control
                             type="text"
                             name="description"
                             value={item.description}
-                            onChange={(e) =>
-                              handleChange(index, e)
-                            }
+                            onChange={(e) => handleChange(index, e)}
                             required
                           />
-
                         </td>
 
                         {/* unit */}
 
                         <td>
-
                           <Form.Control
                             type="text"
                             name="unit"
                             value={item.unit}
-                            onChange={(e) =>
-                              handleChange(index, e)
-                            }
+                            onChange={(e) => handleChange(index, e)}
                             placeholder="m², m³, kg..."
                             required
                           />
-
                         </td>
 
                         {/* quantity */}
 
                         <td>
-
                           <Form.Control
                             type="number"
                             name="quantity"
                             value={item.quantity}
-                            onChange={(e) =>
-                              handleChange(index, e)
-                            }
+                            onChange={(e) => handleChange(index, e)}
                             required
                           />
-
                         </td>
 
                         {/* remove */}
 
                         <td>
-
                           <Button
                             variant="danger"
                             size="sm"
-                            onClick={() =>
-                              removeRow(index)
-                            }
+                            onClick={() => removeRow(index)}
                           >
                             Remove
                           </Button>
-
                         </td>
-
                       </tr>
                     ))}
-
                   </tbody>
-
                 </Table>
 
                 {/* add row */}
 
-                <Button
-                  variant="secondary"
-                  className="mb-4"
-                  onClick={addRow}
-                >
+                <Button variant="secondary" className="mb-4" onClick={addRow}>
                   + Add BOQ Item
                 </Button>
 
                 {/* submit */}
 
-                <Button
-                  type="submit"
-                  className="w-100"
-                  disabled={dataLoading}
-                >
-
-                  {dataLoading ? (
-
-                    <Spinner size="sm" />
-
-                  ) : (
-
-                    "Submit BOQ"
-
-                  )}
-
+                <Button type="submit" className="w-100" disabled={dataLoading}>
+                  {dataLoading ? <Spinner size="sm" /> : "Submit BOQ"}
                 </Button>
-
               </Form>
-
             ) : (
-
               // =========================
               // SUCCESS CARD
               // =========================
 
               <Card className="border-0 bg-light text-center p-5">
-
-                <h3 className="mb-3">
-
-                  BOQ Added Successfully
-
-                </h3>
+                <h3 className="mb-3">BOQ Added Successfully</h3>
 
                 <p className="text-muted">
-
-                  Your tender is now ready
-                  to be published.
-
+                  Your tender is now ready to be published.
                 </p>
 
                 <Button
@@ -416,29 +291,13 @@ export default function BOQPage() {
                   onClick={handlePublishTender}
                   disabled={dataLoading}
                 >
-
-                  {dataLoading ? (
-
-                    <Spinner size="sm" />
-
-                  ) : (
-
-                    "Publish Tender"
-
-                  )}
-
+                  {dataLoading ? <Spinner size="sm" /> : "Publish Tender"}
                 </Button>
-
               </Card>
-
             )}
-
           </Card>
-
         </Col>
-
       </Row>
-
     </Container>
   );
 }

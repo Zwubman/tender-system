@@ -81,7 +81,6 @@ export const register = async (req, res) => {
       { transaction: t },
     );
 
-    
     //  COMMIT
     await t.commit();
 
@@ -192,13 +191,13 @@ export const login = async (req, res) => {
 
     // Payload for JWT (optional to include JWT now or after OTP verification)
     const payload = {
-      id: user.user_id,
+      user_id: user.user_id,
       full_name: user.full_name,
       phone_number: user.phone_number,
-      role: role.name,
+      user_role: role.name,
       email: user.email,
     };
-
+    console.log("Login Payload:", payload);
     const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(payload);
 

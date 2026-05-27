@@ -48,13 +48,14 @@ export default function Create_tender() {
     try {
       const res = await tenderService.createTender(formData, loggedInUserToken);
       const data = await res.json();
+      console.log("Create Tender Response Data:", data);
 
       if (res.ok) {
         setMessage("Tender created successfully");
 
         // redirect to boq page
         setTimeout(() => {
-          navigate(`/tenders/${data.tender.id}/boq`);
+          navigate(`/tenders/${data.tender.tender_id}/boq`);
         }, 1500);
       } else {
         setMessage(data.message || "Failed to create tender");

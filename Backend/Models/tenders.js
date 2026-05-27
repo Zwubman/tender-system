@@ -60,7 +60,7 @@ const Tender = sequelize.define(
   {
     tableName: "tenders",
     timestamps: true,
-  }
+  },
 );
 
 Tender.hasMany(BOQItem, {
@@ -72,7 +72,6 @@ BOQItem.belongsTo(Tender, {
   foreignKey: "tender_id",
   onDelete: "CASCADE",
 });
-
 
 // One tender → many bids
 Tender.hasMany(Bid, {
@@ -95,29 +94,24 @@ WorkerApplication.belongsTo(Tender, {
   onDelete: "CASCADE",
 });
 
-
 Tender.hasMany(WorkerHiring, {
   foreignKey: "tender_id",
   onDelete: "CASCADE",
-
 });
 
 WorkerHiring.belongsTo(Tender, {
   foreignKey: "tender_id",
   onDelete: "CASCADE",
-
 });
 
 Tender.hasMany(WorkerRating, {
   foreignKey: "tender_id",
   onDelete: "CASCADE",
-
 });
 
 WorkerRating.belongsTo(Tender, {
   foreignKey: "tender_id",
   onDelete: "CASCADE",
-
 });
 
 export default Tender;

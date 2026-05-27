@@ -2,9 +2,16 @@
 import { apiFetch } from "../../services/api";
 // A frontend service function to send post request to create a new customer
 const createTender = async (formData, loggedInUserToken) => {
+  console.log(
+    "Creating Tender with Data:",
+    formData,
+    "and Token:",
+    loggedInUserToken,
+  );
   const requestOptions = {
     method: "POST",
     headers: {
+      "Content-Type": "application/json",
       Authorization: `Bearer ${loggedInUserToken}`,
     },
     body: JSON.stringify(formData),
@@ -20,6 +27,7 @@ const addBOQItems = async (tenderId, boqItems, loggedInUserToken) => {
     },
     body: JSON.stringify(boqItems),
   };
+
   const response = await apiFetch(
     `/tenders/${tenderId}/boq-items`,
     requestOptions,

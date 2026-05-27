@@ -40,7 +40,7 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     let valid = true;
-
+    console.log("Submitting Login Form with Data:", formData);
     // Email is required
     if (!formData.email) {
       setEmailError("Email is required");
@@ -73,43 +73,44 @@ export default function Login() {
     setSuccess("");
 
     try {
+      console.log("Submitting Login Form with Data:", formData);
       const res = await authService.Login(formData);
-
       const data = await res.json();
-
       if (res.ok) {
         setSuccess("Login successful");
+        setServerError(""); // Clear previous errors on success
 
         // Save the user in the local storage
-        if (data.user_token.token) {
+        if (data.user_token && data.user_token.token) {
           localStorage.setItem("user", JSON.stringify(data.user_token));
-          // Call the checkAuth function from the useAuth hook to update the state which data from the local storage
+          // Call the checkAuth function to update context state
           checkAuth();
         }
 
-        // Redirect based on role
-        const role = data.user.role;
-        if (location.pathname === "/login") {
-          if (role === "admin") {
-            navigate("/admin_dashboard");
-          } else if (role === "client") {
-            navigate("/client-dashboard");
-          } else if (role === "contractor") {
-            navigate("/contractor-dashboard");
-          } else {
-            navigate("/worker-dashboard");
-          }
+        // Redirect based on role (REMOVED the fragile location.pathname check)
+        const role = data.user?.role;
+
+        if (role === "admin") {
+          navigate("/admin-dashboard");
+        } else if (role === "client") {
+          navigate("/client-dashboard");
+        } else if (role === "contractor") {
+          navigate("/contractor-dashboard");
+        } else {
+          navigate("/worker-dashboard");
         }
       } else {
         setServerError(data.message || "Invalid credentials");
+        setSuccess(""); // Clear success message if authentication failed
       }
     } catch (err) {
-      console.error(err);
+      console.error("Login Error:", err);
       setServerError("Server error");
-    } finally {
-      setLoading(false);
-      setServerError("");
       setSuccess("");
+    } finally {
+      // ONLY disable loading states here.
+      // DO NOT clear serverError or success text here, otherwise they disappear instantly!
+      setLoading(false);
     }
   };
 
