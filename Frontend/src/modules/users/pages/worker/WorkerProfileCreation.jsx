@@ -16,13 +16,13 @@ function WorkerProfile() {
     primary_skill: "",
     other_skills: "",
     experience_years: "",
-    skill_level: "",
-    preferred_work_type: "",
-    availability: "",
+    skill_level: "beginner",
+    preferred_work_type: "full_time",
+    availability: "Available",
     preferred_location: "",
     expected_wage: "",
     bio: "",
-    has_certification: "no",
+    has_certification: "false",
   });
   const [files, setFiles] = useState({
     experience_document: null,
@@ -53,7 +53,7 @@ function WorkerProfile() {
   // the function to handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    console.log("Form Data:", formData);
     const form = new FormData();
 
     Object.keys(formData).forEach((key) => {
