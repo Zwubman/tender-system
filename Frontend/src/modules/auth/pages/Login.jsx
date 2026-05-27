@@ -40,7 +40,6 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     let valid = true;
-    console.log("Submitting Login Form with Data:", formData);
     // Email is required
     if (!formData.email) {
       setEmailError("Email is required");

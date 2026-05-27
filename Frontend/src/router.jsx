@@ -95,7 +95,10 @@ function Router() {
             element={<ViewSubmittedBids />}
           />
           <Route path="bids/:bidId" element={<BidDetails />} />
-          <Route path="tenders/:tenderId/add-bid" element={<SubmitBidPage />} />
+          <Route
+            path="tenders/:tenderId/submit-bids"
+            element={<SubmitBidPage />}
+          />
           <Route path="my-bids" element={<MyBidsPage />} />
         </Route>
         <Route path="/client-profile" element={<ClientProfile />} />

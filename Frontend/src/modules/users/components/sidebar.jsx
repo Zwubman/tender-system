@@ -64,7 +64,7 @@ export default function Sidebar({ role }) {
       },
     ],
   };
-  console.log("User role in sidebar:", role);
+
   const currentMenus = menuItems[role] || [];
 
   return (

@@ -254,7 +254,7 @@ export default function TenderDetails() {
                   <Button
                     variant="success"
                     onClick={() =>
-                      navigate(`/tenders/${tender.tender_id}/submit-bid`)
+                      navigate(`/tenders/${tender.tender_id}/submit-bids`)
                     }
                   >
                     Submit Bid

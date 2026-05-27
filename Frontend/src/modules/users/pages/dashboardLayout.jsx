@@ -22,7 +22,6 @@ function DashboardLayout() {
 
   // 2. Once loading is false, we are 100% sure we have the real role (or null if logged out)
   const role = user?.user_role || null;
-  console.log("DashboardLayout: User Role Verified:", role);
 
   return (
     <div className="layout d-flex">
