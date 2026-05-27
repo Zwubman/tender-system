@@ -78,14 +78,14 @@ export default function MyTenders() {
       const data = await res.json();
 
       if (res.ok) {
-        Alert("Tender published successfully");
+        alert("Tender published successfully");
       } else {
-        Alert(data.message || "Failed to publish tender");
+        alert(data.message || "Failed to publish tender");
       }
     } catch (error) {
       console.error(error);
 
-      Alert("Server error");
+      alert("Server error");
     } finally {
       setDataLoading(false);
     }
