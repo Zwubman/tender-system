@@ -34,11 +34,17 @@ const getWorkersByFilter = async (query) => {
   const response = await apiFetch(`/workers/search?${query}`);
   return response;
 };
+// the frontend service function that send the get request to retrive the worker details by worker id
+const getWorkerDetails = async (workerId) => {
+  const response = await apiFetch(`/workers/${workerId}`);
+  return response;
+};
 // export all the functions
 const userService = {
   clientDetail,
   contractorDetail,
   workerDetail,
+  getWorkerDetails,
   getWorkers,
   getWorkersByFilter,
 };
