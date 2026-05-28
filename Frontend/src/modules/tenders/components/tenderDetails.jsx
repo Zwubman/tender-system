@@ -135,7 +135,18 @@ export default function TenderDetails() {
     );
 
   return (
-    <Container className="py-5">
+    <div className="pb-5">
+      <div className="mb-4">
+        <Button 
+          variant="danger" 
+          size="sm" 
+          onClick={() => navigate(userRole === "client" ? "/my-tenders" : "/tenders")}
+          className="d-flex align-items-center gap-2 px-4"
+        >
+          <span>&larr;</span> Back to Tenders
+        </Button>
+      </div>
+      
       {/* Header Section */}
       <div className="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
         <div>
@@ -368,6 +379,6 @@ export default function TenderDetails() {
           </Button>
         </Modal.Footer>
       </Modal>
-    </Container>
+    </div>
   );
 }

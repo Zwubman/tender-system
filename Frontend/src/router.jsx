@@ -68,12 +68,17 @@ import AddAdminPage from "./modules/users/pages/admin/AddAdminPage.jsx";
 import SubmitBidPage from "./modules/bids/components/SubmitBid.jsx";
 // import the ViewSubmittedBids page that allow the contractors to see their submitted bids
 import MyBidsPage from "./modules/bids/components/MyBidsPage.jsx";
+import ProfilePage from "./modules/users/pages/ProfilePage.jsx";
+import WorkerNotifications from "./modules/users/pages/worker/WorkerNotifications.jsx";
+import ContractorNotifications from "./modules/users/pages/contractor/ContractorNotifications.jsx";
+import HiringDetails from "./modules/users/pages/worker/HiringDetails.jsx";
 // import the protector function
 import PrivateAuthRoute from "./components/Auth/privateAuthRoute.jsx";
 // import th Four04 not found page
 import Four04 from "./modules/public/pages/Four04.jsx";
 // import the UnAuthorized page
 import UnAuthorized from "./modules/public/pages/UnAuthorized.jsx";
+import { useAuth } from "./context/AuthContext";
 // the function that perform the routing
 function Router() {
   return (
@@ -262,6 +267,17 @@ function Router() {
       <Footer />
     </>
   );
+}
+
+// Helper component to switch notifications based on role
+function NotificationSwitch() {
+  const { user } = useAuth();
+  const role = user?.user_role?.toLowerCase();
+
+  if (role === "contractor") {
+    return <ContractorNotifications />;
+  }
+  return <WorkerNotifications />;
 }
 
 export default Router;

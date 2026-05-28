@@ -9,7 +9,7 @@ export default function Sidebar({ role }) {
   // Defined static workspace route registers
   const menuItems = {
     admin: [
-      { name: "Dashboard", path: "/admin-dashboard" }, // Fixed matching routing suffix context
+      { name: "Dashboard", path: "/admin-dashboard" },
       { name: "Pending Approvals", path: "/admin/pending-approvals" },
       { name: "Manage Users", path: "/admin/users" },
       { name: "All Tenders", path: "/tenders" },
@@ -21,10 +21,7 @@ export default function Sidebar({ role }) {
       { name: "Dashboard", path: "/client-dashboard" },
       { name: "Create Tender", path: "/create-tender" },
       { name: "My Tenders", path: "/my-tenders" },
-      { name: "Review Bids", path: "/review-bids" },
-      { name: "Award Decisions", path: "/award-tenders" },
-      { name: "Notifications", path: "/notifications" },
-      { name: "Profile", path: "/client-profile" },
+      { name: "Profile", path: "/profile" },
     ],
 
     contractor: [
@@ -32,6 +29,13 @@ export default function Sidebar({ role }) {
       { name: "Available Tenders", path: "/tenders" },
       { name: "My Bids", path: "/my-bids" },
       { name: "Workers", path: "/workers" },
+      { name: "Notifications", path: "/notifications" },
+      { name: "Profile", path: "/profile" },
+    ],
+
+    worker: [
+      { name: "Dashboard", path: "/worker-dashboard" },
+      { name: "Notifications", path: "/notifications" },
       { name: "Profile", path: "/profile" },
     ],
   };
@@ -58,7 +62,7 @@ export default function Sidebar({ role }) {
 
   return (
     <>
-      {/* 1. MOBILE RESPONSIVE NAV TOP-BAR */}
+      {/* 1. MOBILE RESPONSIVE NAV TOP-BAR (Kept your premium gradient styling!) */}
       <div
         className="d-lg-none text-white px-3 py-2.5 d-flex justify-content-between align-items-center shadow-sm"
         style={{

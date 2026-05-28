@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 import {
   Card,
@@ -22,6 +22,7 @@ import { useAuth } from "../../../context/AuthContext";
 import bidService from "../bidService.js";
 export default function BidDetails() {
   const { bidId } = useParams();
+  const navigate = useNavigate();
 
   const [bid, setBid] = useState(null);
 
@@ -206,7 +207,18 @@ export default function BidDetails() {
   // =========================
 
   return (
-    <div>
+    <div className="pb-5">
+      <div className="mb-4">
+        <Button 
+          variant="danger" 
+          size="sm" 
+          onClick={() => isClient ? navigate(`/tenders/${bid.tender_id}/bids`) : navigate("/my-bids")}
+          className="d-flex align-items-center gap-2 px-4"
+        >
+          <span>&larr;</span> Back to {isClient ? 'Bids List' : 'My Bids'}
+        </Button>
+      </div>
+      
       {/* header */}
       <div
         className="

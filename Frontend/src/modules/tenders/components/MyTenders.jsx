@@ -8,6 +8,7 @@ import {
   Spinner,
   Alert,
   Button,
+  Pagination,
 } from "react-bootstrap";
 import { useAuth } from "../../../context/AuthContext";
 import tenderService from "../tenderService";
@@ -16,6 +17,9 @@ export default function MyTenders() {
   const [tenders, setTenders] = useState([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
   const { user, loading } = useAuth();
   let loggedInUserToken = !loading ? user?.token : null;
@@ -30,7 +34,7 @@ export default function MyTenders() {
       return;
     }
 
-    const fetchTenders = async () => {
+    const fetchTenders = async (page = 1) => {
       try {
         setDataLoading(true);
         setError("");
@@ -38,11 +42,15 @@ export default function MyTenders() {
         const res = await tenderService.clientTenders(
           clientId,
           loggedInUserToken,
+          page
         );
         const data = await res.json();
 
         if (res.ok) {
           setTenders(data.tenders || []);
+          setTotalPages(data.totalPages || 1);
+          setCurrentPage(data.currentPage || 1);
+          setTotalCount(data.totalCount || 0);
         } else {
           setError(data.message || "Failed to fetch internal tender records.");
         }
@@ -56,8 +64,12 @@ export default function MyTenders() {
       }
     };
 
-    fetchTenders();
-  }, [clientId, loggedInUserToken, loading]);
+    fetchTenders(currentPage);
+  }, [clientId, loggedInUserToken, loading, currentPage]);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
 
   const handlePublishTender = async (tenderId) => {
     if (!window.confirm("Are you sure you want to make this tender public?"))
@@ -111,7 +123,7 @@ export default function MyTenders() {
   }
 
   return (
-    <Container className="mt-5 mb-5">
+    <div className="pb-5 p-4">
       {/* Header Section */}
       <div className="d-flex justify-content-between align-items-end mb-4 pb-3 border-bottom">
         <div>
@@ -272,6 +284,56 @@ export default function MyTenders() {
           ))
         )}
       </Row>
-    </Container>
+
+      {/* Pagination Footer */}
+      {!dataLoading && totalCount > 0 && (
+        <div className="mt-4 pt-4 border-top d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+           <div className="text-muted small">
+              Showing <strong>{tenders.length}</strong> of <strong>{totalCount}</strong> tenders
+           </div>
+           
+           {totalPages > 1 && (
+             <Pagination className="mb-0 shadow-sm">
+               <Pagination.Prev 
+                 onClick={() => handlePageChange(currentPage - 1)} 
+                 disabled={currentPage === 1}
+               >
+                 &laquo; Prev
+               </Pagination.Prev>
+               
+               {[...Array(totalPages)].map((_, i) => {
+                 const pageNum = i + 1;
+                 if (
+                   pageNum === 1 ||
+                   pageNum === totalPages ||
+                   (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                 ) {
+                   return (
+                     <Pagination.Item
+                       key={pageNum}
+                       active={pageNum === currentPage}
+                       onClick={() => handlePageChange(pageNum)}
+                     >
+                       {pageNum}
+                     </Pagination.Item>
+                   );
+                 }
+                 if (pageNum === currentPage - 2 || pageNum === currentPage + 2) {
+                   return <Pagination.Ellipsis key={pageNum} />;
+                 }
+                 return null;
+               })}
+
+               <Pagination.Next 
+                 onClick={() => handlePageChange(currentPage + 1)} 
+                 disabled={currentPage === totalPages}
+               >
+                 Next &raquo;
+               </Pagination.Next>
+             </Pagination>
+           )}
+        </div>
+      )}
+    </div>
   );
 }

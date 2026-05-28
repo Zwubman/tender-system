@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 import {
   Row,
@@ -11,14 +11,19 @@ import {
   Alert,
   ListGroup,
   Button,
+  Modal,
+  Form,
 } from "react-bootstrap";
 
 // import user service
 import userService from "../../userService";
 //  import the useAuth hook to get the logged in user token
 import { useAuth } from "../../../../context/AuthContext";
+// toast
+import { toast } from "react-toastify";
 
 export default function WorkerDetails() {
+  const navigate = useNavigate();
   // get worker id
   const { workerId } = useParams();
 
@@ -28,6 +33,12 @@ export default function WorkerDetails() {
   const [dataLoading, setDataLoading] = useState(true);
 
   const [error, setError] = useState("");
+
+  // hire modal states
+  const [showHireModal, setShowHireModal] = useState(false);
+  const [hireMessage, setHireMessage] = useState("");
+  const [hireLoading, setHireLoading] = useState(false);
+
   //   distructure the logged in user token from the useAuth hook
   const { user, loading } = useAuth();
   let loggedInUserToken = !loading ? user?.token : null;
@@ -71,6 +82,42 @@ export default function WorkerDetails() {
   }, [workerId, loggedInUserToken, loading]);
 
   // =========================
+  // hire worker handler
+  // =========================
+
+  const handleHireWorker = async () => {
+    if (!hireMessage.trim()) {
+      toast.error("Please enter a message for the worker.");
+      return;
+    }
+
+    try {
+      setHireLoading(true);
+
+      const res = await userService.hireWorker(
+        worker.worker_id,
+        hireMessage,
+        loggedInUserToken
+      );
+
+      const data = await res.json();
+
+      if (res.ok) {
+        toast.success(data.message || "Worker hired successfully!");
+        setHireMessage("");
+        setShowHireModal(false);
+      } else {
+        toast.error(data.message || "Failed to hire worker.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setHireLoading(false);
+    }
+  };
+
+  // =========================
   // loading
   // =========================
 
@@ -103,7 +150,17 @@ export default function WorkerDetails() {
   // =========================
 
   return (
-    <div>
+    <div className="pb-5">
+      <div className="mb-4">
+        <Button 
+          variant="danger" 
+          size="sm" 
+          onClick={() => navigate("/workers")}
+          className="d-flex align-items-center gap-2 px-4"
+        >
+          <span>&larr;</span> Back to Workers
+        </Button>
+      </div>
       <Row>
         {/* left side */}
         <Col lg={4}>
@@ -131,18 +188,22 @@ export default function WorkerDetails() {
               /> */}
 
               {/* name */}
-              <h3>{worker.full_name}</h3>
+              <h3>{worker.User?.full_name}</h3>
 
               {/* primary skill */}
-              <Badge bg="primary" className="mb-3">
-                {worker.primary_skill}
-              </Badge>
+              <div className="mb-3">
+                <strong>Primary Skill: </strong>
+                <Badge bg="primary">
+                  {worker.primary_skill}
+                </Badge>
+              </div>
 
               {/* availability */}
               <div className="mb-3">
+                <strong>Availability: </strong>
                 <Badge
                   bg={
-                    worker.availability === "available"
+                    worker.availability?.toLowerCase() === "available"
                       ? "success"
                       : "secondary"
                   }
@@ -154,27 +215,15 @@ export default function WorkerDetails() {
               {/* contact */}
               <ListGroup variant="flush">
                 <ListGroup.Item>
-                  <strong>Email:</strong>
-
-                  <br />
-
-                  {worker.email}
+                  <strong>Email:</strong> {worker.User?.email}
                 </ListGroup.Item>
 
                 <ListGroup.Item>
-                  <strong>Phone:</strong>
-
-                  <br />
-
-                  {worker.phone}
+                  <strong>Phone:</strong> {worker.User?.phone_number}
                 </ListGroup.Item>
 
                 <ListGroup.Item>
-                  <strong>Location:</strong>
-
-                  <br />
-
-                  {worker.preferred_location}
+                  <strong>Location:</strong> {worker.preferred_location}
                 </ListGroup.Item>
               </ListGroup>
             </Card.Body>
@@ -227,7 +276,12 @@ export default function WorkerDetails() {
                 <strong>Other Skills:</strong>
 
                 <div className="mt-2">
-                  {worker.other_skills?.map((skill, index) => (
+                  {(Array.isArray(worker.other_skills)
+                    ? worker.other_skills
+                    : typeof worker.other_skills === "string"
+                      ? worker.other_skills.split(",").map((s) => s.trim()).filter(Boolean)
+                      : []
+                  ).map((skill, index) => (
                     <Badge
                       key={index}
                       bg="secondary"
@@ -263,11 +317,76 @@ export default function WorkerDetails() {
                 <strong>Availability:</strong> {worker.availability}
               </p>
 
-              <Button variant="success">Contact Worker</Button>
+              <Button
+                variant="success"
+                onClick={() => {
+                  setHireMessage("");
+                  setShowHireModal(true);
+                }}
+              >
+                Contact Worker
+              </Button>
             </Card.Body>
           </Card>
         </Col>
       </Row>
+
+      {/* Hire Worker Confirmation Modal */}
+      <Modal
+        show={showHireModal}
+        onHide={() => setShowHireModal(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Hire {worker.User?.full_name}</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          <p>
+            You are about to send a hire request to{" "}
+            <strong>{worker.User?.full_name}</strong>. Please include a message
+            describing the job or project details.
+          </p>
+
+          <Form.Group>
+            <Form.Label>
+              <strong>Message</strong>
+            </Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={4}
+              placeholder="Describe the job, expected duration, location, etc."
+              value={hireMessage}
+              onChange={(e) => setHireMessage(e.target.value)}
+              disabled={hireLoading}
+            />
+          </Form.Group>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowHireModal(false)}
+            disabled={hireLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="success"
+            onClick={handleHireWorker}
+            disabled={hireLoading}
+          >
+            {hireLoading ? (
+              <>
+                <Spinner animation="border" size="sm" className="me-2" />
+                Sending...
+              </>
+            ) : (
+              "Confirm & Hire"
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }

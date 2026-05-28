@@ -23,47 +23,55 @@ const Header = () => {
     <>
       {/* 1. HEADER (Navbar) */}
       <Navbar
-        bg="white"
         expand="lg"
         sticky="top"
-        className="shadow-sm py-3"
-        style={{ zIndex: 1020, position: "sticky", top: 0 }}
+        className="shadow-sm border-bottom border-secondary border-opacity-10 py-2"
+        style={{ 
+          zIndex: 1020, 
+          position: "sticky", 
+          top: 0, 
+          background: "#0b1b3d", // Matches Sidebar shade
+          borderBottom: "1px solid rgba(255,255,255,0.1) !important"
+        }}
       >
         <Container>
-          <Navbar.Brand href="/" className="fw-bold text-primary">
-            NEXUS OPS
+          <Navbar.Brand href="/" className="fw-bold text-white fs-4">
+            <span className="text-primary mr-1">NEXUS</span> OPS
           </Navbar.Brand>
-          <Navbar.Toggle aria-controls="basic-navbar-nav" />
+          <Navbar.Toggle aria-controls="basic-navbar-nav" variant="dark" className="border-secondary" />
           <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="ms-auto">
-              <Nav.Link href="#features">Features</Nav.Link>
-              <Nav.Link href="#about">About System</Nav.Link>
-              <Nav.Link href="#contact">Contact</Nav.Link>
+            <Nav className="ms-auto align-items-center">
+              <Nav.Link href="#features" className="text-white opacity-75 hover-opacity-100">Features</Nav.Link>
+              <Nav.Link href="#about" className="text-white opacity-75 hover-opacity-100">About System</Nav.Link>
+              <Nav.Link href="#contact" className="text-white opacity-75 hover-opacity-100">Contact</Nav.Link>
               {isLogged ? (
                 <Button
-                  variant="primary"
-                  className="ms-lg-3 px-4"
+                  variant="outline-light"
+                  size="sm"
+                  className="ms-lg-3 px-3 rounded-pill"
                   onClick={handleLogout}
                 >
                   Logout
                 </Button>
               ) : (
-                <>
+                <div className="d-flex gap-2 ms-lg-3">
                   <Button
                     variant="primary"
-                    className="ms-lg-3 px-4"
+                    size="sm"
+                    className="px-3 rounded-pill"
                     onClick={() => navigate("/register")}
                   >
                     Sign up
                   </Button>
                   <Button
-                    variant="primary"
-                    className="ms-lg-3 px-4"
+                    variant="outline-light"
+                    size="sm"
+                    className="px-3 rounded-pill"
                     onClick={() => navigate("/login")}
                   >
                     Login
                   </Button>
-                </>
+                </div>
               )}
             </Nav>
           </Navbar.Collapse>

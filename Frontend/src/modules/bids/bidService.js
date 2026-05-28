@@ -41,14 +41,14 @@ const submitBid = async (tenderId, formData, loggedInUserToken) => {
   return response;
 };
 // the frontend service function that send the request to retrive bids of the contractior
-const getMyBids = async (loggedInUserToken, contrdctorId) => {
+const getMyBids = async (loggedInUserToken, contrdctorId, page = 1) => {
   const requestOptions = {
     headers: {
       Authorization: `Bearer ${loggedInUserToken}`,
     },
   };
   const response = await apiFetch(
-    `/bids?contractor_id=${contrdctorId}`,
+    `/bids?contractor_id=${contrdctorId}&page=${page}&limit=10`,
     requestOptions,
   );
 

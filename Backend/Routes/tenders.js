@@ -11,6 +11,7 @@ import {
   get_open_tenders,
   delete_tender,
   update_tender,
+  get_client_received_bids,
 } from "../Controllers/tenders.js";
 import { authenticate, requireRole } from "../Middlewares/auth.js";
 import upload from "../Middlewares/upload.js";
@@ -19,6 +20,7 @@ const router = express.Router();
 
 router.post("/", authenticate, create_tender);
 router.get("/open", get_open_tenders);
+router.get("/my-received-bids", authenticate, get_client_received_bids);
 router.get("/", get_client_tenders);
 router.get("/:id", get_tender_details);
 router.post("/:id/boq-items", add_boq_item);

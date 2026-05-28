@@ -36,7 +36,7 @@ const WorkerHiring = sequelize.define(
   {
     tableName: "worker_hiring",
     timestamps: true,
-  }
+  },
 );
 
 export default WorkerHiring;
