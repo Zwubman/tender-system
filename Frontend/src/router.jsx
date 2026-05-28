@@ -56,12 +56,24 @@ import BidDetails from "./modules/bids/components/BidDetails.jsx";
 import WorkersPage from "./modules/users/pages/worker/WorkersPage.jsx";
 // import the worker details page
 import WorkerDetails from "./modules/users/pages/worker/WorkerDetail.jsx";
+// import the users page for the admin to manage the users of the system
+import Users from "./modules/users/pages/admin/Users.jsx";
+// import the pending approval page for the admin to see the users who are in the pending approval state
+import PendingApprovalPage from "./modules/users/pages/admin/PendingApproval.jsx";
+// import the pending approval details page for the admin to see the details of the user who are in the pending approval state and approve or reject them
+import ApprovalDetailPage from "./modules/users/pages/admin/ApprovalDetail.jsx";
+// import the page that allow the admin to add other admins to the system
+import AddAdminPage from "./modules/users/pages/admin/AddAdminPage.jsx";
 // import the submitBid page
 import SubmitBidPage from "./modules/bids/components/SubmitBid.jsx";
 // import the ViewSubmittedBids page that allow the contractors to see their submitted bids
 import MyBidsPage from "./modules/bids/components/MyBidsPage.jsx";
 // import the protector function
 import PrivateAuthRoute from "./components/Auth/privateAuthRoute.jsx";
+// import th Four04 not found page
+import Four04 from "./modules/public/pages/Four04.jsx";
+// import the UnAuthorized page
+import UnAuthorized from "./modules/public/pages/UnAuthorized.jsx";
 // the function that perform the routing
 function Router() {
   return (
@@ -77,41 +89,174 @@ function Router() {
         {/* protected routes */}
         <Route element={<DashboardLayout />}>
           {/* admin related routes */}
-          <Route path="admin-dashboard" element={<Admin_dashboard />} />
+          <Route
+            path="admin-dashboard"
+            element={
+              <PrivateAuthRoute roles={["admin"]}>
+                <Admin_dashboard />
+              </PrivateAuthRoute>
+            }
+          />
           {/* client client page */}
-          <Route path="client-dashboard" element={<Client_dashboard />} />
+          <Route
+            path="client-dashboard"
+            element={
+              <PrivateAuthRoute roles={["client", "admin"]}>
+                <Client_dashboard />
+              </PrivateAuthRoute>
+            }
+          />
           {/*contractor dashboard page  */}
           <Route
             path="contractor-dashboard"
-            element={<Contractor_dashboard />}
+            element={
+              <PrivateAuthRoute roles={["contractor", "admin"]}>
+                <Contractor_dashboard />
+              </PrivateAuthRoute>
+            }
           />
           {/* worker dashboard page */}
-          <Route path="worker-dashboard" element={<Worker_dashboard />} />
+          <Route
+            path="worker-dashboard"
+            element={
+              <PrivateAuthRoute roles={["worker", "admin"]}>
+                <Worker_dashboard />
+              </PrivateAuthRoute>
+            }
+          />
           {/* tender related pages */}
-          <Route path="create-tender" element={<Create_tender />} />
-          <Route path="tenders/:tenderId/boq" element={<BOQPage />} />
-          <Route path="tenders" element={<TendersPage />} />
-          <Route path="my-tenders" element={<MyTenders />} />
-          <Route path="tenders/:tenderId" element={<TenderDetails />} />
+          <Route
+            path="create-tender"
+            element={
+              <PrivateAuthRoute roles={["client", "admin"]}>
+                <Create_tender />
+              </PrivateAuthRoute>
+            }
+          />
+
+          <Route
+            path="tenders/:tenderId/boq"
+            element={
+              <PrivateAuthRoute roles={["client", "admin"]}>
+                <BOQPage />
+              </PrivateAuthRoute>
+            }
+          />
+          <Route
+            path="tenders"
+            element={
+              <PrivateAuthRoute roles={["client", "contractor", "admin"]}>
+                <TendersPage />
+              </PrivateAuthRoute>
+            }
+          />
+          <Route
+            path="my-tenders"
+            element={
+              <PrivateAuthRoute roles={["client", "admin"]}>
+                <MyTenders />
+              </PrivateAuthRoute>
+            }
+          />
+
+          <Route
+            path="tenders/:tenderId"
+            element={
+              <PrivateAuthRoute roles={["client", "contractor", "admin"]}>
+                <TenderDetails />
+              </PrivateAuthRoute>
+            }
+          />
           {/* bid related pages */}
           <Route
             path="tenders/:tenderId/bids"
-            element={<ViewSubmittedBids />}
+            element={
+              <PrivateAuthRoute roles={["client", "admin"]}>
+                <ViewSubmittedBids />
+              </PrivateAuthRoute>
+            }
           />
-          <Route path="bids/:bidId" element={<BidDetails />} />
+          <Route
+            path="bids/:bidId"
+            element={
+              <PrivateAuthRoute roles={["client", "contractor", "admin"]}>
+                <BidDetails />
+              </PrivateAuthRoute>
+            }
+          />
           <Route
             path="tenders/:tenderId/submit-bids"
-            element={<SubmitBidPage />}
+            element={
+              <PrivateAuthRoute roles={["contractor", "admin"]}>
+                <SubmitBidPage />
+              </PrivateAuthRoute>
+            }
           />
-          <Route path="my-bids" element={<MyBidsPage />} />
-          <Route path="workers" element={<WorkersPage />} />
-          <Route path="workers/:workerId" element={<WorkerDetails />} />
+          <Route
+            path="my-bids"
+            element={
+              <PrivateAuthRoute roles={["contractor", "admin"]}>
+                <MyBidsPage />
+              </PrivateAuthRoute>
+            }
+          />
+          <Route
+            path="workers"
+            element={
+              <PrivateAuthRoute roles={["client", "contractor", "admin"]}>
+                <WorkersPage />
+              </PrivateAuthRoute>
+            }
+          />
+          <Route
+            path="workers/:workerId"
+            element={
+              <PrivateAuthRoute roles={["client", "contractor", "admin"]}>
+                <WorkerDetails />
+              </PrivateAuthRoute>
+            }
+          />
+          <Route
+            path="admin/users"
+            element={
+              <PrivateAuthRoute roles={["admin"]}>
+                <Users />
+              </PrivateAuthRoute>
+            }
+          />
+          <Route
+            path="admin/pending-approvals"
+            element={
+              <PrivateAuthRoute roles={["admin"]}>
+                <PendingApprovalPage />
+              </PrivateAuthRoute>
+            }
+          />
+          <Route
+            path="admin/pending-approvals/:userId"
+            element={
+              <PrivateAuthRoute roles={["admin"]}>
+                <ApprovalDetailPage />
+              </PrivateAuthRoute>
+            }
+          />
+          <Route
+            path="admin/add-admin"
+            element={
+              <PrivateAuthRoute roles={["admin"]}>
+                <AddAdminPage />
+              </PrivateAuthRoute>
+            }
+          />
         </Route>
         <Route path="/client-profile" element={<ClientProfile />} />
 
         <Route path="/contractor-profile" element={<ContractorProfile />} />
 
         <Route path="/worker-profile" element={<WorkerProfile />} />
+        {/* unauthorization and 404 pages */}
+        <Route path="/unauthorized" element={<UnAuthorized />} />
+        <Route path="*" element={<Four04 />} />
       </Routes>
       {/* the footer component will be shown on all pages */}
       <Footer />

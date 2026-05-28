@@ -39,13 +39,89 @@ const getWorkerDetails = async (workerId) => {
   const response = await apiFetch(`/workers/${workerId}`);
   return response;
 };
+// the frontend service function that send the request to get  the users of the system
+const getUsers = async (query, loggedInUserToken) => {
+  const requestOptions = {
+    headers: {
+      Authorization: `Bearer ${loggedInUserToken}`,
+    },
+  };
+  const response = await apiFetch(`/admin/users${query}`, requestOptions);
+  return response;
+};
+// the frontend service function that send the request to get the users who are in the pending approval state
+const getPendingUsers = async (loggedInUserToken) => {
+  const requestOptions = {
+    headers: {
+      Authorization: `Bearer ${loggedInUserToken}`,
+    },
+  };
+  const response = await apiFetch(`/admin/pending-users`, requestOptions);
+  return response;
+};
+// the frontend service function that send the request to get the user details  for the approval details page
+const getUserDetail = async (userId, loggedInUserToken) => {
+  const requestOptions = {
+    headers: {
+      Authorization: `Bearer ${loggedInUserToken}`,
+    },
+  };
+  const response = await apiFetch(`/admin/users/${userId}`, requestOptions);
+  return response;
+};
+// the frontend service function that send the request to approve the user who are in the pending approval state
+const approveUser = async (userId, loggedInUserToken) => {
+  const requestOptions = {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${loggedInUserToken}`,
+    },
+  };
+  const response = await apiFetch(
+    `/admin/users/${userId}/verify`,
+    requestOptions,
+  );
+  return response;
+};
+// the frontend service function that send the request to reject the user who are in the pending approval state
+const rejectUser = async (userId, reason, loggedInUserToken) => {
+  const requestOptions = {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${loggedInUserToken}`,
+    },
+    body: JSON.stringify({ reason }),
+  };
+  const response = await apiFetch(
+    `/admin/users/${userId}/suspend`,
+    requestOptions,
+  );
+  return response;
+};
+// the frontend service function that send the request to add admins
+const createAdmin = async (adminPayload, loggedInUserToken) => {
+  const requestOptions = {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${loggedInUserToken}`,
+    },
+    body: JSON.stringify(adminPayload),
+  };
+  return apiFetch("/admin/users/add-admin", requestOptions);
+};
+
 // export all the functions
 const userService = {
   clientDetail,
   contractorDetail,
   workerDetail,
+  getUsers,
   getWorkerDetails,
   getWorkers,
   getWorkersByFilter,
+  getUserDetail,
+  approveUser,
+  rejectUser,
+  createAdmin,
 };
 export default userService;

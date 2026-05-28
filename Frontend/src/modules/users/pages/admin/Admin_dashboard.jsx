@@ -8,6 +8,7 @@ import {
   FaBullhorn,
 } from "react-icons/fa";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { Link } from "react-router-dom";
 
 const Admin_dashboard = () => {
   // Sample data based on our generated mockup layout
@@ -28,42 +29,49 @@ const Admin_dashboard = () => {
       {/* 1. ADMIN METRICS ROW */}
       <Row className="g-3 mb-4">
         {/* Pending Approvals */}
+
         <Col md={4}>
-          <Card
-            className="text-white border-0 text-center py-4"
-            style={{ backgroundColor: "#4a90e2", borderRadius: "10px" }}
-          >
-            <Card.Body className="d-flex flex-column align-items-center justify-content-center p-2">
-              <span className="fw-bold mb-2">Pending Approvals: 9</span>
-              <FaUserCheck size={22} className="opacity-75" />
-            </Card.Body>
-          </Card>
+          <Link to="/admin/pending-approvals" className="text-decoration-none">
+            <Card
+              className="text-white border-0 text-center py-4"
+              style={{ backgroundColor: "#4a90e2", borderRadius: "10px" }}
+            >
+              <Card.Body className="d-flex flex-column align-items-center justify-content-center p-2">
+                <span className="fw-bold mb-2">Pending Approvals: 9</span>
+                <FaUserCheck size={22} className="opacity-75" />
+              </Card.Body>
+            </Card>
+          </Link>
         </Col>
 
         {/* Total Active Users */}
         <Col md={4}>
-          <Card
-            className="text-white border-0 text-center py-4"
-            style={{ backgroundColor: "#5cb85c", borderRadius: "10px" }}
-          >
-            <Card.Body className="d-flex flex-column align-items-center justify-content-center p-2">
-              <span className="fw-bold mb-2">Total Active Users: 145</span>
-              <FaUsers size={22} className="opacity-75" />
-            </Card.Body>
-          </Card>
+          <Link to="/admin/users" className="text-decoration-none">
+            <Card
+              className="text-white border-0 text-center py-4"
+              style={{ backgroundColor: "#5cb85c", borderRadius: "10px" }}
+            >
+              <Card.Body className="d-flex flex-column align-items-center justify-content-center p-2">
+                <span className="fw-bold mb-2">Total Active Users: 145</span>
+                <FaUsers size={22} className="opacity-75" />
+              </Card.Body>
+            </Card>
+          </Link>
         </Col>
 
         {/* New Tenders Today */}
         <Col md={4}>
-          <Card
-            className="text-white border-0 text-center py-4"
-            style={{ backgroundColor: "#f0ad4e", borderRadius: "10px" }}
-          >
-            <Card.Body className="d-flex flex-column align-items-center justify-content-center p-2">
-              <span className="fw-bold mb-2">New Tenders Today: 3</span>
-              <FaFileMedical size={20} className="opacity-75" />
-            </Card.Body>
-          </Card>
+          <Link to="/admin/tenders" className="text-decoration-none">
+            <Card
+              className="text-white border-0 text-center py-4"
+              style={{ backgroundColor: "#f0ad4e", borderRadius: "10px" }}
+            >
+              <Card.Body className="d-flex flex-column align-items-center justify-content-center p-2">
+                <span className="fw-bold mb-2">New Tenders Today: 3</span>
+                <FaFileMedical size={20} className="opacity-75" />
+              </Card.Body>
+            </Card>
+          </Link>
         </Col>
       </Row>
 
