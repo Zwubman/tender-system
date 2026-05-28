@@ -29,14 +29,15 @@ export default function PendingApprovalPage() {
   const [dataLoading, setDataLoading] = useState(true);
 
   const [error, setError] = useState("");
-//   distructure the logged in user  and loading state from the useAuth hook
-    const { user, loading } = useAuth();
-    let loggedInUserToken = !loading ? user?.token : null;
+  //   distructure the logged in user  and loading state from the useAuth hook
+  const { user, loading } = useAuth();
+  let loggedInUserToken = !loading ? user?.token : null;
   // =========================
   // fetch pending users
   // =========================
 
   const fetchPendingUsers = async () => {
+    console.log("Fetching pending users with token:", loggedInUserToken);
     if (loading) return;
     if (!loggedInUserToken) {
       setError("You must be logged in to view pending users.");
@@ -59,7 +60,7 @@ export default function PendingApprovalPage() {
         setError(data.message);
       }
     } catch (error) {
-      console.error(error);
+      console.log(error);
 
       setError("Failed to load pending users");
     } finally {
@@ -99,7 +100,7 @@ export default function PendingApprovalPage() {
   // loading
   // =========================
 
-  if (loading ||dataLoading) {
+  if (loading || dataLoading) {
     return (
       <div className="text-center mt-5">
         <Spinner animation="border" />

@@ -294,7 +294,7 @@ export default function UsersPage() {
                         className="px-2.5 py-1.5 text-uppercase"
                         style={{ fontSize: "0.7rem", letterSpacing: "0.3px" }}
                       >
-                        {item.user_role}
+                        {item.role}
                       </Badge>
                     </td>
                     <td

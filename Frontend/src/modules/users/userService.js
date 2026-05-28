@@ -76,6 +76,7 @@ const getPendingUsers = async (loggedInUserToken) => {
       Authorization: `Bearer ${loggedInUserToken}`,
     },
   };
+  console.log("Fetching pending users with token:", loggedInUserToken);
   const response = await apiFetch(`/admin/pending-users`, requestOptions);
   return response;
 };
