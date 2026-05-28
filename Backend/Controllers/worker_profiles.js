@@ -133,12 +133,22 @@ export const get_all_worker_profiles = async (req, res) => {
 
 export const get_worker_profile_by_id = async (req, res) => {
   try {
+
+    const id = req.params.id;
+    
+    const user = await User.findOne({
+      where: { user_id: id, status: "active" },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
     const workerProfile = await WorkerProfile.findOne({
-      where: { worker_id: req.params.id },
+      where: { user_id: user.user_id },
       include: [
-        {
-          model: WorkerApplication,
-        },
         {
           model: WorkerHiring,
         },
@@ -168,8 +178,9 @@ export const get_worker_profile_by_id = async (req, res) => {
 
 export const update_worker_profile = async (req, res) => {
   try {
+    const id = req.params.id;
     const worker = await WorkerProfile.findOne({
-      where: { worker_id: req.params.id },
+      where: { worker_id: id },
     });
 
     if (!worker) {
