@@ -1,3 +1,4 @@
+import { Op } from "sequelize";
 import Tender from "../Models/tenders.js";
 import BOQItem from "../Models/boq_items.js";
 import Bid from "../Models/bids.js";
@@ -119,16 +120,12 @@ export const get_tender_details = async (req, res) => {
 export const get_client_tenders = async (req, res) => {
   try {
     const { client_id } = req.query;
-    console.log("Fetching tenders for client_id:", req.query);
-    if (!client_id) {
-      return res
-        .status(400)
-        .json({ error: "client_id query parameter is required." });
-    }
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
 
-    const user = await User.findOne({ where: { user_id: client_id } });
-    if (!user) {
-      return res.status(404).json({ error: "User not found." });
+    if (!client_id) {
+      return res.status(400).json({ error: "client_id query parameter is required." });
     }
 
     const client_profile = await ClientProfile.findOne({
@@ -139,14 +136,18 @@ export const get_client_tenders = async (req, res) => {
       return res.status(404).json({ error: "Client profile not found." });
     }
 
-    const tenders = await Tender.findAll({
+    const { count, rows: tenders } = await Tender.findAndCountAll({
       where: { client_id: client_profile.client_id },
+      limit,
+      offset,
       include: [
         {
           model: BOQItem,
           attributes: ["boq_id", "description", "item_no", "unit", "quantity"],
         },
       ],
+      distinct: true,
+      order: [["createdAt", "DESC"]],
     });
 
     const boq_items = await BOQItem.findAll({
@@ -168,6 +169,9 @@ export const get_client_tenders = async (req, res) => {
       success: true,
       message: "Client tenders fetched successfully",
       tenders,
+      totalCount: count,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
     });
   } catch (error) {
     console.error("Error fetching client tenders:", error);
@@ -617,20 +621,30 @@ export const publish_tender = async (req, res) => {
 // To retrieve open tender
 export const get_open_tenders = async (req, res) => {
   try {
-    const open_tenders = await Tender.findAll({
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await Tender.findAndCountAll({
       where: { status: "open" },
+      limit,
+      offset,
       include: [
         {
           model: BOQItem,
           attributes: ["boq_id", "description", "item_no", "unit", "quantity"],
         },
       ],
+      distinct: true,
     });
 
     return res.status(200).json({
       success: true,
       message: "Open tenders fetched successfully",
-      tenders: open_tenders,
+      tenders: rows,
+      totalCount: count,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
     });
   } catch (error) {
     console.error("Error fetching open tenders:", error);
@@ -759,5 +773,81 @@ export const update_tender = async (req, res) => {
       success: false,
       message: error.message,
     });
+  }
+};
+
+// Get all bids received across all of the client's tenders
+export const get_client_received_bids = async (req, res) => {
+  try {
+    const user_id = req.user.user_id;
+    const limit = parseInt(req.query.limit) || 8;
+
+    const client_profile = await ClientProfile.findOne({ where: { user_id } });
+    if (!client_profile) {
+      return res.status(404).json({ success: false, message: "Client profile not found." });
+    }
+
+    // Collect all tender IDs belonging to this client
+    const tenders = await Tender.findAll({
+      where: { client_id: client_profile.client_id },
+      attributes: ["tender_id", "title", "status", "deadline"],
+    });
+
+    const tenderIds = tenders.map((t) => t.tender_id);
+
+    if (tenderIds.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: "No tenders found for this client.",
+        bids: [],
+        totalCount: 0,
+      });
+    }
+
+    // Build a lookup map for tender info
+    const tenderMap = {};
+    tenders.forEach((t) => {
+      tenderMap[t.tender_id] = { title: t.title, status: t.status, deadline: t.deadline };
+    });
+
+    // Fetch recent bids across all these tenders
+    const bidsData = await Bid.findAll({
+      where: { tender_id: { [Op.in]: tenderIds } },
+      include: [
+        {
+          model: ContractorProfile,
+          include: [
+            {
+              model: User,
+              attributes: ["full_name", "email"],
+            },
+          ],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+      limit,
+    });
+
+    const formattedBids = bidsData.map((bid) => ({
+      bid_id: bid.bid_id,
+      tender_id: bid.tender_id,
+      tender_title: tenderMap[bid.tender_id]?.title || "—",
+      tender_status: tenderMap[bid.tender_id]?.status || "—",
+      tender_deadline: tenderMap[bid.tender_id]?.deadline,
+      contractor_name: bid.ContractorProfile?.User?.full_name || "Unknown Contractor",
+      contractor_email: bid.ContractorProfile?.User?.email || null,
+      bid_status: bid.status,
+      submitted_at: bid.createdAt,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      message: "Client received bids fetched successfully.",
+      bids: formattedBids,
+      totalCount: formattedBids.length,
+    });
+  } catch (error) {
+    console.error("Error fetching client received bids:", error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 };

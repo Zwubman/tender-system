@@ -87,7 +87,7 @@ export const get_bid_details = async (req, res) => {
     // Format response
     const formattedBid = {
       bid_id: bid.bid_id,
-
+      tender_id: bid.tender_id,
       status: bid.status,
 
       contractor_name: bid.ContractorProfile.User?.full_name || null,
@@ -135,6 +135,9 @@ export const get_bid_details = async (req, res) => {
 export const get_contractor_bids = async (req, res) => {
   try {
     const { contractor_id } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
 
     const user = await User.findOne({
       where: { user_id: contractor_id },
@@ -158,20 +161,26 @@ export const get_contractor_bids = async (req, res) => {
       });
     }
 
-    const bids = await Bid.findAll({
+    const { count, rows } = await Bid.findAndCountAll({
       where: { contractor_id: contractor.contractor_id },
+      limit,
+      offset,
       include: [
         {
           model: Tender,
           attributes: ["tender_id", "title", "deadline", "location"],
         },
       ],
+      distinct: true,
     });
 
     return res.status(200).json({
       success: true,
       message: "Contractor bid history fetched successfully",
-      bids,
+      bids: rows,
+      totalCount: count,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
     });
   } catch (error) {
     console.error("Error fetching contractor bid history:", error);

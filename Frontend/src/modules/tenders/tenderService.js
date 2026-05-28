@@ -52,14 +52,14 @@ const publishTender = async (tenderId, loggedInUserToken) => {
 };
 
 // the frontend service function to retrive the tenders that are opend or published
-const getOpenTenders = async () => {
-  const response = await apiFetch("/tenders/open");
+const getOpenTenders = async (page = 1) => {
+  const response = await apiFetch(`/tenders/open?page=${page}&limit=10`);
 
   return response;
 };
 // the frontend service function to retrive the tenders of the specific client
-const clientTenders = async (clientId, loggedInUserToken) => {
-  const response = await apiFetch(`/tenders?client_id=${clientId}`, {
+const clientTenders = async (clientId, loggedInUserToken, page = 1, limit = 10) => {
+  const response = await apiFetch(`/tenders?client_id=${clientId}&page=${page}&limit=${limit}`, {
     headers: {
       Authorization: `Bearer ${loggedInUserToken}`,
     },
@@ -93,6 +93,16 @@ const cancelTender = async (tenderId, cancellationData, loggedInUserToken) => {
   );
   return response;
 };
+
+// Fetch all bids received across all of a client's tenders
+const getClientReceivedBids = async (token, limit = 8) => {
+  const response = await apiFetch(`/tenders/my-received-bids?limit=${limit}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response;
+};
 // export all the functions
 const tenderService = {
   createTender,
@@ -102,5 +112,6 @@ const tenderService = {
   clientTenders,
   tenderDetail,
   cancelTender,
+  getClientReceivedBids,
 };
 export default tenderService;

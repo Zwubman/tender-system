@@ -60,8 +60,13 @@ import WorkerDetails from "./modules/users/pages/worker/WorkerDetail.jsx";
 import SubmitBidPage from "./modules/bids/components/SubmitBid.jsx";
 // import the ViewSubmittedBids page that allow the contractors to see their submitted bids
 import MyBidsPage from "./modules/bids/components/MyBidsPage.jsx";
+import ProfilePage from "./modules/users/pages/ProfilePage.jsx";
+import WorkerNotifications from "./modules/users/pages/worker/WorkerNotifications.jsx";
+import ContractorNotifications from "./modules/users/pages/contractor/ContractorNotifications.jsx";
+import HiringDetails from "./modules/users/pages/worker/HiringDetails.jsx";
 // import the protector function
 import PrivateAuthRoute from "./components/Auth/privateAuthRoute.jsx";
+import { useAuth } from "./context/AuthContext";
 // the function that perform the routing
 function Router() {
   return (
@@ -106,6 +111,14 @@ function Router() {
           <Route path="my-bids" element={<MyBidsPage />} />
           <Route path="workers" element={<WorkersPage />} />
           <Route path="workers/:workerId" element={<WorkerDetails />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route 
+            path="notifications" 
+            element={
+              <NotificationSwitch />
+            } 
+          />
+          <Route path="notifications/:id" element={<HiringDetails />} />
         </Route>
         <Route path="/client-profile" element={<ClientProfile />} />
 
@@ -117,6 +130,17 @@ function Router() {
       <Footer />
     </>
   );
+}
+
+// Helper component to switch notifications based on role
+function NotificationSwitch() {
+  const { user } = useAuth();
+  const role = user?.user_role?.toLowerCase();
+
+  if (role === 'contractor') {
+    return <ContractorNotifications />;
+  }
+  return <WorkerNotifications />;
 }
 
 export default Router;

@@ -32,10 +32,7 @@ export default function Sidebar({ role }) {
       { name: "Dashboard", path: "/client-dashboard" },
       { name: "Create Tender", path: "/create-tender" },
       { name: "My Tenders", path: "/my-tenders" },
-      { name: "Review Bids", path: "/review-bids" },
-      { name: "Award Decisions", path: "/award-tenders" },
-      { name: "Notifications", path: "/notifications" },
-      { name: "Profile", path: "/client-profile" },
+      { name: "Profile", path: "/profile" },
     ],
 
     contractor: [
@@ -59,6 +56,25 @@ export default function Sidebar({ role }) {
         path: "/workers",
       },
       {
+        name: "Notifications",
+        path: "/notifications",
+      },
+      {
+        name: "Profile",
+        path: "/profile",
+      },
+    ],
+
+    worker: [
+      {
+        name: "Dashboard",
+        path: "/worker-dashboard",
+      },
+      {
+        name: "Notifications",
+        path: "/notifications",
+      },
+      {
         name: "Profile",
         path: "/profile",
       },
@@ -70,8 +86,11 @@ export default function Sidebar({ role }) {
   return (
     <>
       {/* mobile top bar */}
-      <div className="d-lg-none bg-primary text-white px-3 py-2 d-flex justify-content-between align-items-center">
-        <div className="fw-bold">menu</div>
+      <div 
+        className="d-lg-none text-white px-3 py-2 d-flex justify-content-between align-items-center"
+        style={{ background: "#0b1b3d" }}
+      >
+        <div className="fw-bold fs-5">NEXUS OPS</div>
 
         <Button
           variant="outline-light"
