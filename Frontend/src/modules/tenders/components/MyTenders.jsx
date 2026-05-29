@@ -9,14 +9,22 @@ import {
   Alert,
   Button,
   Pagination,
+  Modal,
 } from "react-bootstrap";
 import { useAuth } from "../../../context/AuthContext";
+import { toast } from "react-toastify";
 import tenderService from "../tenderService";
 
 export default function MyTenders() {
   const [tenders, setTenders] = useState([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Modal states
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [tenderToPublish, setTenderToPublish] = useState(null);
+  const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -56,7 +64,7 @@ export default function MyTenders() {
         }
       } catch (err) {
         console.error("Network error:", err);
-        setError(
+        toast.error(
           "System error: Could not establish a connection to the tender database.",
         );
       } finally {
@@ -71,34 +79,38 @@ export default function MyTenders() {
     setCurrentPage(page);
   };
 
-  const handlePublishTender = async (tenderId) => {
-    if (!window.confirm("Are you sure you want to make this tender public?"))
-      return;
+  const handlePublishTender = (tenderId) => {
+    setTenderToPublish(tenderId);
+    setPublishError("");
+    setShowConfirm(true);
+  };
+
+  const confirmPublish = async () => {
+    if (!tenderToPublish) return;
+    
     try {
-      setDataLoading(true);
+      setPublishing(true);
       const res = await tenderService.publishTender(
-        tenderId,
+        tenderToPublish,
         loggedInUserToken,
       );
       const data = await res.json();
 
       if (res.ok) {
-        // Refresh local state or show success
         setTenders((prev) =>
           prev.map((t) =>
-            t.tender_id === tenderId ? { ...t, status: "open" } : t,
+            t.tender_id === tenderToPublish ? { ...t, status: "open" } : t,
           ),
         );
-        alert(
-          "Operational Alert: Tender has been successfully published to the public portal.",
-        );
+        toast.success(data.message || "Tender published successfully");
+        setShowConfirm(false);
       } else {
-        alert(data.message || "Failed to finalize publication.");
+        setPublishError(data.message || "Failed to finalize publication.");
       }
     } catch (error) {
-      alert("Critical Server Error during publication.");
+      toast.error("Critical Server Error during publication.");
     } finally {
-      setDataLoading(false);
+      setPublishing(false);
     }
   };
 
@@ -227,18 +239,30 @@ export default function MyTenders() {
                   <div className="d-grid gap-2">
                     {/* Logically Driven Action Buttons */}
                     {!tender.boq_added ? (
-                      <Button
-                        variant="dark"
-                        className="fw-bold shadow-sm"
-                        href={`/tenders/${tender.tender_id}/boq`}
-                      >
-                        Step 2: Add BOQ Items
-                      </Button>
+                      <div className="d-grid gap-2">
+                         <div className="d-flex gap-2">
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            className="flex-shrink-0 text-white"
+                            href={`/tenders/${tender.tender_id}/edit`}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="dark"
+                            className="flex-grow-1 fw-bold shadow-sm"
+                            href={`/tenders/${tender.tender_id}/boq`}
+                          >
+                            Step 2: Add BOQ Items
+                          </Button>
+                        </div>
+                      </div>
                     ) : tender.status === "draft" ? (
                       <div className="d-flex gap-2">
                         <Button
-                          variant="outline-warning"
-                          className="w-25"
+                          variant="primary"
+                          className="w-25 text-white"
                           href={`/tenders/${tender.tender_id}/edit`}
                         >
                           Edit
@@ -257,22 +281,31 @@ export default function MyTenders() {
                         </Button>
                       </div>
                     ) : (
-                      <div className="d-flex gap-2">
-                        <Button
-                          variant="outline-primary"
-                          className="flex-grow-1"
-                          href={`/tenders/${tender.tender_id}`}
-                        >
-                          Details
-                        </Button>
+                       <div className="d-flex flex-column gap-2">
+                        <div className="d-flex gap-2">
+                          <Button
+                            variant="outline-primary"
+                            className="flex-grow-1"
+                            href={`/tenders/${tender.tender_id}`}
+                          >
+                            Details
+                          </Button>
+                          <Button
+                            variant="primary"
+                            className="flex-grow-1 text-white"
+                            href={`/tenders/${tender.tender_id}/edit`}
+                          >
+                            Edit
+                          </Button>
+                        </div>
                         {(tender.status === "open" ||
                           tender.status === "published") && (
                           <Button
-                            variant="primary"
-                            className="flex-grow-1 fw-bold"
+                            variant="outline-primary"
+                            className="w-100 fw-bold"
                             href={`/tenders/${tender.tender_id}/bids`}
                           >
-                            View Bids
+                            View Bids ({tender.bid_count || 0})
                           </Button>
                         )}
                       </div>
@@ -284,6 +317,63 @@ export default function MyTenders() {
           ))
         )}
       </Row>
+
+      {/* Confirmation Modal */}
+      <Modal show={showConfirm} onHide={() => !publishing && setShowConfirm(false)} centered>
+        <Modal.Header closeButton={!publishing} className="border-0 pb-0">
+          <Modal.Title className="fw-bold">Confirm Publication</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="py-4">
+          {publishError ? (
+            <Alert variant="danger" className="border-0 shadow-sm">
+              <div className="d-flex align-items-center mb-3">
+                <span className="me-2 fs-4">⚠️</span>
+                <span className="fw-bold">{publishError}</span>
+              </div>
+              <div className="d-grid mt-2">
+                <Button 
+                  variant="primary" 
+                  href={`/tenders/${tenderToPublish}/edit`}
+                  className="fw-bold rounded-pill"
+                >
+                  Edit Tender Deadline
+                </Button>
+              </div>
+            </Alert>
+          ) : (
+            <p className="mb-0 text-secondary fs-5">
+              Are you sure you want to make this tender public? Once published, contractors will be able to see it and submit bids.
+            </p>
+          )}
+        </Modal.Body>
+        <Modal.Footer className="border-0 pt-0">
+          <Button 
+            variant="outline-secondary" 
+            onClick={() => setShowConfirm(false)} 
+            disabled={publishing}
+            className="px-4 rounded-pill"
+          >
+            {publishError ? "Close" : "Cancel"}
+          </Button>
+          {!publishError && (
+            <Button 
+              variant="success" 
+              onClick={confirmPublish} 
+              disabled={publishing}
+              className="px-4 rounded-pill fw-bold"
+            >
+              {publishing ? (
+                <>
+                  <Spinner size="sm" className="me-2" />
+                  Publishing...
+                </>
+              ) : (
+                "Yes, Publish Now"
+              )}
+            </Button>
+          )}
+        </Modal.Footer>
+      </Modal>
 
       {/* Pagination Footer */}
       {!dataLoading && totalCount > 0 && (

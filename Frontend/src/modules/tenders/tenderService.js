@@ -75,6 +75,20 @@ const tenderDetail = async (tenderId, loggedInUserToken) => {
   });
   return response;
 };
+
+// Update an existing tender
+const updateTender = async (tenderId, formData, loggedInUserToken) => {
+  const requestOptions = {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${loggedInUserToken}`,
+    },
+    body: JSON.stringify(formData),
+  };
+  return apiFetch(`/tenders/${tenderId}`, requestOptions);
+};
+
 // the frontend service function to cancel tender
 const cancelTender = async (tenderId, cancellationData, loggedInUserToken) => {
   const requestOptions = {
@@ -111,6 +125,7 @@ const tenderService = {
   getOpenTenders,
   clientTenders,
   tenderDetail,
+  updateTender,
   cancelTender,
   getClientReceivedBids,
 };

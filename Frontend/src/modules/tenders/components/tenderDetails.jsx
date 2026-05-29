@@ -141,9 +141,9 @@ export default function TenderDetails() {
           variant="danger" 
           size="sm" 
           onClick={() => navigate(userRole === "client" ? "/my-tenders" : "/tenders")}
-          className="d-flex align-items-center gap-2 px-4"
+          className="d-flex align-items-center gap-2 px-4 rounded-pill fw-bold"
         >
-          <span>&larr;</span> Back to Tenders
+          <span>&larr;</span> Back
         </Button>
       </div>
       

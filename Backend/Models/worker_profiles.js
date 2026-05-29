@@ -66,6 +66,9 @@ const WorkerProfile = sequelize.define(
       type: DataTypes.ENUM("pending", "verified", "suspended"),
       defaultValue: "pending",
     },
+    suspension_reason: {
+      type: DataTypes.TEXT,
+    },
   },
   {
     tableName: "worker_profiles",

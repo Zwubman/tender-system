@@ -252,6 +252,9 @@ export const update_worker_profile = async (req, res) => {
       up_to_date.certificates_files = `${req.protocol}://${req.get("host")}/${uploadedFile.path.replace(/\\/g, "/")}`;
     }
 
+    up_to_date.verification_status = "pending";
+    up_to_date.suspension_reason = null;
+
     await worker.update(up_to_date);
 
     // Re-fetch with User details included

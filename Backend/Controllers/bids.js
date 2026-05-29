@@ -280,16 +280,16 @@ export const update_bid = async (req, res) => {
       });
     }
 
-    // VALIDATE ISSUE DATE
-    const issueDate = new Date(issue_date);
+    // BLOCK UPDATE AFTER TENDER DEADLINE
+    const now = new Date();
     const deadlineDate = new Date(tender.deadline);
 
-    if (issueDate <= deadlineDate) {
+    if (now > deadlineDate) {
       await t.rollback();
 
       return res.status(400).json({
         success: false,
-        message: "Bid security issue date must be after tender deadline.",
+        message: "The tender deadline has passed. You can no longer update your bid.",
       });
     }
 

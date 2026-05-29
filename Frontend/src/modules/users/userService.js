@@ -59,6 +59,16 @@ const getWorkerDetails = async (workerId) => {
   const response = await apiFetch(`/workers/${workerId}`);
   return response;
 };
+
+// fetching contractor details by ID
+const getContractorDetails = async (contractorId, token) => {
+  const response = await apiFetch(`/contractors/${contractorId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response;
+};
 // the frontend service function that send the request to get  the users of the system
 const getUsers = async (query, loggedInUserToken) => {
   const requestOptions = {
@@ -82,6 +92,19 @@ const getPendingUsers = async (loggedInUserToken) => {
 };
 // the frontend service function that send the request to get the user details  for the approval details page
 const getUserDetail = async (userId, loggedInUserToken) => {
+  const requestOptions = {
+    headers: {
+      Authorization: `Bearer ${loggedInUserToken}`,
+    },
+  };
+  const response = await apiFetch(
+    `/admin/pending-users/${userId}`,
+    requestOptions,
+  );
+  return response;
+};
+
+const getAnyUserDetail = async (userId, loggedInUserToken) => {
   const requestOptions = {
     headers: {
       Authorization: `Bearer ${loggedInUserToken}`,
@@ -111,7 +134,7 @@ const rejectUser = async (userId, reason, loggedInUserToken) => {
     headers: {
       Authorization: `Bearer ${loggedInUserToken}`,
     },
-    body: JSON.stringify({ reason }),
+    body: JSON.stringify(reason),
   };
   const response = await apiFetch(
     `/admin/users/${userId}/suspend`,
@@ -241,6 +264,25 @@ const getContractorNotifications = async (token) => {
   return apiFetch("/hiring", requestOptions);
 };
 
+const getAdminStats = async (token) => {
+  const requestOptions = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
+  return apiFetch("/admin/stats", requestOptions);
+};
+
+const resubmitProfile = async (token) => {
+  const requestOptions = {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
+  return apiFetch("/users/resubmit-profile", requestOptions);
+};
+
 // export all the functions
 const userService = {
   clientDetail,
@@ -248,6 +290,7 @@ const userService = {
   workerDetail,
   getUsers,
   getWorkerDetails,
+  getContractorDetails,
   getWorkers,
   getWorkersByFilter,
   getUserDetail,
@@ -267,6 +310,10 @@ const userService = {
   getContractorNotifications,
   getClientProfile,
   updateClientProfile,
+  getPendingUsers,
+  getAnyUserDetail,
+  getAdminStats,
+  resubmitProfile,
 };
 
 export default userService;

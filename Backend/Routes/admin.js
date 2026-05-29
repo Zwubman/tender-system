@@ -1,11 +1,14 @@
 import express from "express";
-import { get_all_users, verify_user, suspend_user, get_pending_users, get_pending_user_detail } from "../Controllers/admin.js";
+import { get_all_users, verify_user, suspend_user, get_pending_users, get_pending_user_detail, get_user_detail, add_admin, get_admin_stats } from "../Controllers/admin.js";
 import { authenticate, requireRole } from "../Middlewares/auth.js";
 
 
 const router = express.Router();
 
+router.get("/stats", get_admin_stats);
 router.get("/users", get_all_users);
+router.get("/users/:id", get_user_detail);
+router.post("/users/add-admin", add_admin);
 router.patch("/users/:id/verify", verify_user);
 router.patch("/users/:id/suspend", suspend_user);
 router.get("/pending-users", get_pending_users);

@@ -98,9 +98,15 @@ export default function UsersPage() {
 
   // Handle immediate search triggers on filter selections
   const handleRoleFilterChange = (e) => {
-    const selectedRole = e.target.value;
-    setRole(selectedRole);
+    setRole(e.target.value);
   };
+
+  // Re-fetch when role changes
+  useEffect(() => {
+    if (!loading && loggedInUserToken) {
+      fetchUsers(true);
+    }
+  }, [role]);
 
   // =========================
   // Context Presentation Variants
@@ -108,13 +114,13 @@ export default function UsersPage() {
   const getRoleVariant = (role) => {
     switch (role?.toLowerCase()) {
       case "client":
-        return "info";
+        return "primary";
       case "contractor":
         return "warning";
       case "worker":
         return "success";
       case "admin":
-        return "dark";
+        return "danger";
       default:
         return "secondary";
     }
@@ -149,15 +155,12 @@ export default function UsersPage() {
           </p>
         </div>
         <Button
-          variant="primary"
-          size="sm"
-          className="fw-semibold px-3 shadow-sm border-0"
-          style={{
-            background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-          }}
+          variant="success"
+          size="lg"
+          className="fw-bold px-4 shadow-sm border-0 d-flex align-items-center gap-2"
           onClick={() => navigate("/admin/add-admin")}
         >
-          + Provision New Admin
+          <span className="fs-4">+</span> New Admin
         </Button>
       </div>
 
@@ -171,46 +174,39 @@ export default function UsersPage() {
             }}
           >
             <Row className="g-2 align-items-center">
-              <Col md={6} lg={7}>
-                <Form.Control
-                  type="text"
-                  placeholder="Search accounts by name, email, identifier keywords..."
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  className="bg-light border-0 py-2 px-3 small shadow-none"
-                  style={{ fontSize: "0.9rem" }}
-                />
+              <Col md={8} lg={9}>
+                <div className="position-relative">
+                  <Form.Control
+                    type="text"
+                    placeholder="Search accounts by name, email, or keywords..."
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    className="bg-light border-0 py-2.5 px-4 small shadow-none rounded-pill"
+                    style={{ fontSize: "0.95rem" }}
+                  />
+                  <span 
+                    className="position-absolute end-0 top-50 translate-middle-y me-3 text-muted"
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => fetchUsers(true)}
+                  >
+                    🔍
+                  </span>
+                </div>
               </Col>
 
-              <Col sm={6} md={3} lg={3}>
+              <Col md={4} lg={3}>
                 <Form.Select
                   value={role}
                   onChange={handleRoleFilterChange}
-                  className="bg-light border-0 py-2 px-3 small shadow-none text-secondary"
-                  style={{ fontSize: "0.9rem", fontWeight: "500" }}
+                  className="bg-light border-0 py-2.5 px-3 small shadow-none text-dark fw-semibold rounded-pill"
+                  style={{ fontSize: "0.95rem" }}
                 >
-                  <option value="">All Platform Roles</option>
-                  <option value="client">Clients Only</option>
-                  <option value="contractor">Contractors Only</option>
-                  <option value="worker">Workers Only</option>
-                  <option value="admin">Administrators Only</option>
+                  <option value="">All Roles</option>
+                  <option value="client">Client</option>
+                  <option value="contractor">Contractor</option>
+                  <option value="worker">Worker</option>
+                  <option value="admin">Admin</option>
                 </Form.Select>
-              </Col>
-
-              <Col sm={6} md={2} lg={2}>
-                <Button
-                  type="submit"
-                  variant="dark"
-                  className="w-100 py-2 fw-semibold text-white d-flex align-items-center justify-content-center"
-                  style={{ fontSize: "0.9rem", backgroundColor: "#1e293b" }}
-                  disabled={searchLoading}
-                >
-                  {searchLoading ? (
-                    <Spinner size="sm" animation="border" variant="light" />
-                  ) : (
-                    "Query Filters"
-                  )}
-                </Button>
               </Col>
             </Row>
           </Form>
@@ -250,7 +246,7 @@ export default function UsersPage() {
                     Phone Number
                   </th>
                   <th className="py-3 border-0" style={{ fontSize: "0.8rem" }}>
-                    Clearance Role
+                    Role
                   </th>
                   <th
                     className="py-3 text-end pe-4 border-0"
@@ -269,16 +265,26 @@ export default function UsersPage() {
                   >
                     <td className="py-3 ps-4">
                       <div className="d-flex align-items-center gap-3">
-                        <img
-                          src={
-                            item.profile_image ||
-                            "https://via.placeholder.com/40"
-                          }
-                          alt="avatar"
-                          width="36"
-                          height="36"
-                          className="rounded-circle object-fit-cover bg-light border"
-                        />
+                        {item.profile_image ? (
+                          <img
+                            src={item.profile_image}
+                            alt="avatar"
+                            width="36"
+                            height="36"
+                            className="rounded-circle object-fit-cover bg-light border"
+                          />
+                        ) : (
+                          <div
+                            className="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold shadow-sm"
+                            style={{
+                              width: "36px",
+                              height: "36px",
+                              fontSize: "0.9rem",
+                            }}
+                          >
+                            {item.full_name?.charAt(0).toUpperCase()}
+                          </div>
+                        )}
                         <span className="fw-semibold text-dark">
                           {item.full_name}
                         </span>
@@ -290,26 +296,26 @@ export default function UsersPage() {
                     </td>
                     <td>
                       <Badge
-                        bg={getRoleVariant(item.user_role)}
-                        className="px-2.5 py-1.5 text-uppercase"
-                        style={{ fontSize: "0.7rem", letterSpacing: "0.3px" }}
+                        bg={getRoleVariant(item.user_role || item.role)}
+                        className="px-3 py-2 text-capitalize"
+                        style={{ fontSize: "0.75rem", fontWeight: "600" }}
                       >
-                        {item.role}
+                        {item.role || item.user_role}
                       </Badge>
                     </td>
                     <td
                       className="text-end pe-4"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <Button
-                        size="sm"
-                        variant="outline-primary"
-                        className="rounded-2 px-3 py-1 fw-medium"
-                        style={{ fontSize: "0.8rem" }}
-                        onClick={() => navigate(`/admin/users/${item.user_id}`)}
-                      >
-                        Inspect Node
-                      </Button>
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          className="rounded-2 px-3 py-1 fw-bold shadow-sm"
+                          style={{ fontSize: "0.8rem" }}
+                          onClick={() => navigate(`/admin/users/${item.user_id}`)}
+                        >
+                          View Detail
+                        </Button>
                     </td>
                   </tr>
                 ))}
@@ -326,16 +332,26 @@ export default function UsersPage() {
                     <Card.Body className="p-3">
                       <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
                         <div className="d-flex align-items-center gap-2">
-                          <img
-                            src={
-                              item.profile_image ||
-                              "https://via.placeholder.com/40"
-                            }
-                            alt="profile"
-                            width="40"
-                            height="40"
-                            className="rounded-circle border object-fit-cover"
-                          />
+                          {item.profile_image ? (
+                            <img
+                              src={item.profile_image}
+                              alt="profile"
+                              width="40"
+                              height="40"
+                              className="rounded-circle border object-fit-cover"
+                            />
+                          ) : (
+                            <div
+                              className="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold shadow-sm"
+                              style={{
+                                width: "40px",
+                                height: "40px",
+                                fontSize: "1.1rem",
+                              }}
+                            >
+                              {item.full_name?.charAt(0).toUpperCase()}
+                            </div>
+                          )}
                           <div>
                             <h6 className="fw-bold mb-0 text-dark">
                               {item.full_name}
@@ -349,11 +365,11 @@ export default function UsersPage() {
                           </div>
                         </div>
                         <Badge
-                          bg={getRoleVariant(item.user_role)}
-                          className="text-uppercase px-2 py-1"
-                          style={{ fontSize: "0.65rem" }}
+                          bg={getRoleVariant(item.user_role || item.role)}
+                          className="text-capitalize px-3 py-1"
+                          style={{ fontSize: "0.75rem" }}
                         >
-                          {item.user_role}
+                          {item.user_role || item.role}
                         </Badge>
                       </div>
 
@@ -368,12 +384,12 @@ export default function UsersPage() {
                       </div>
 
                       <Button
-                        variant="outline-primary"
+                        variant="primary"
                         size="sm"
-                        className="w-100 py-2 fw-semibold"
+                        className="w-100 py-2 fw-bold shadow-sm"
                         onClick={() => navigate(`/admin/users/${item.user_id}`)}
                       >
-                        View Account Inspection
+                        View Detail
                       </Button>
                     </Card.Body>
                   </Card>

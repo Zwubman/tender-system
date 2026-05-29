@@ -191,9 +191,26 @@ export default function MyBidsPage() {
                           >
                             {(bid.status || "under_review").replace("_", " ")}
                           </Badge>
-                          <Link to={`/bids/${bid.bid_id}`} className="btn btn-primary btn-sm rounded-pill px-4">
-                            View Details
-                          </Link>
+                          <div className="d-flex gap-2">
+                            <Link
+                              to={`/bids/${bid.bid_id}/edit`}
+                              className={`btn btn-sm rounded-pill px-3 ${
+                                new Date() > new Date(bid.Tender.deadline)
+                                  ? "btn-secondary disabled"
+                                  : "btn-primary text-white"
+                              }`}
+                              title={
+                                new Date() > new Date(bid.Tender.deadline)
+                                  ? "Deadline passed — editing locked"
+                                  : "Edit your bid"
+                              }
+                            >
+                              Edit
+                            </Link>
+                            <Link to={`/bids/${bid.bid_id}`} className="btn btn-outline-primary btn-sm rounded-pill px-4">
+                              View Details
+                            </Link>
+                          </div>
                         </div>
                       </Card.Body>
                     </Card>

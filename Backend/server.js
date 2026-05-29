@@ -33,6 +33,8 @@ import bidRoutes from "./Routes/bids.js";
 import adminRoutes from "./Routes/admin.js";
 import workerHiringRoutes from "./Routes/worker_hiring.js";
 import boqItemRoutes from "./Routes/boq_items.js";
+import userRoutes from "./Routes/users.js";
+import { startTenderDeadlineChecker } from "./Utils/cron_jobs.js";
 
 dotenv.config();
 
@@ -61,6 +63,7 @@ app.use("/bids", bidRoutes);
 app.use("/admin", adminRoutes);
 app.use("/hiring", workerHiringRoutes);
 app.use("/boq-items", boqItemRoutes);
+app.use("/users", userRoutes);
 const startServer = async () => {
   try {
     await sequelize.authenticate();
@@ -69,6 +72,9 @@ const startServer = async () => {
     // This creates tables automatically
     await sequelize.sync({ alter: true });
     console.log("Tables synchronized");
+
+    // Start cron jobs
+    startTenderDeadlineChecker();
 
     app.listen(process.env.PORT || 3000, () => {
       console.log(`Server running on port ${process.env.PORT}`);

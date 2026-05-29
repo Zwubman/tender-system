@@ -6,6 +6,7 @@ import {
   update_contractor_profile,
   delete_contractor_profile,
   get_my_profile,
+  get_contractor_profile_by_id,
 } from "../Controllers/contractor_profiles.js";
 import upload from "../Middlewares/upload.js"
 import { authenticate, requireRole } from "../Middlewares/auth.js";
@@ -16,6 +17,7 @@ router.post("/profile", upload.single("license_document"), create_contractor_pro
 router.get("/profile", get_contractor_profile);
 router.get("/profiles", get_all_contractor_profiles);
 router.get("/my-profile", authenticate, get_my_profile);
+router.get("/:id", authenticate, get_contractor_profile_by_id);
 router.put("/profile", authenticate, upload.single("license_document"), update_contractor_profile);
 router.delete("/profile", delete_contractor_profile);
 

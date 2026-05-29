@@ -104,7 +104,7 @@ export default function AddAdminPage() {
 
         // Redirect the admin to an overview or dashboard list page after a delay
         setTimeout(() => {
-          navigate("/admin/dashboard");
+          navigate("/admin/users");
         }, 2000);
       } else {
         setError(data.message || "Failed to create administrator account.");
@@ -349,7 +349,7 @@ export default function AddAdminPage() {
                     Provisioning Admin Node...
                   </>
                 ) : (
-                  "Deploy Administrator Credentials"
+                  "Register"
                 )}
               </Button>
             </Form>

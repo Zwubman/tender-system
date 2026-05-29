@@ -156,9 +156,9 @@ export default function WorkerDetails() {
           variant="danger" 
           size="sm" 
           onClick={() => navigate("/workers")}
-          className="d-flex align-items-center gap-2 px-4"
+          className="d-flex align-items-center gap-2 px-4 rounded-pill fw-bold"
         >
-          <span>&larr;</span> Back to Workers
+          <span>&larr;</span> Back
         </Button>
       </div>
       <Row>

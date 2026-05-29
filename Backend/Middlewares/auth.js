@@ -40,7 +40,7 @@ export const requireRole = (...allowedRoles) => {
       });
     }
 
-    const userRole = req.user.role?.toLowerCase();
+    const userRole = (req.user.role || req.user.user_role)?.toLowerCase();
 
     if (!allowedRoles.map((r) => r.toLowerCase()).includes(userRole)) {
       return res.status(403).json({

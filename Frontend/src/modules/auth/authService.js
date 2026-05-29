@@ -10,17 +10,41 @@ const Login = async (formData) => {
   return response;
 };
 
-// A function to send post request to create a new customer
 const register = async (formData) => {
-  const requestOptions = {
+  return apiFetch("/auth/register", {
     method: "POST",
     body: JSON.stringify(formData),
-  };
-  return apiFetch("/auth/register", requestOptions);
+  });
 };
+
+// A function to send post request to create a new customer
+const requestOtp = async (email) => {
+  return apiFetch("/users/request-otp", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+};
+
+const verifyOtp = async (email, otp) => {
+  return apiFetch("/users/verify-otp", {
+    method: "POST",
+    body: JSON.stringify({ email, otp }),
+  });
+};
+
+const resetPassword = async (email, otp, newPassword) => {
+  return apiFetch("/users/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ email, otp, newPassword }),
+  });
+};
+
 // export all the functions
 const authService = {
   Login,
   register,
+  requestOtp,
+  verifyOtp,
+  resetPassword,
 };
 export default authService;

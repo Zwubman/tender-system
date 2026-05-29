@@ -1,240 +1,193 @@
-import { useState } from "react";
-import {
-  Container,
-  Form,
-  Button,
-  Row,
-  Col,
-  Card,
-  Spinner,
-  Alert,
-} from "react-bootstrap";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Container, Form, Button, Row, Col, Card, Spinner, Alert } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import userService from "../../userService";
+import { useAuth } from "../../../../context/AuthContext";
+import { toast } from "react-toastify";
 
-function WorkerProfile() {
+export default function ContractorProfileCreation() {
+  const { user, loading: authLoading } = useAuth();
   const [formData, setFormData] = useState({
-    primary_skill: "",
-    other_skills: "",
-    years_of_experience: "",
-    skill_level: "",
-    preferred_work_type: "",
-    availability: "",
-    preferred_location: "",
-    expected_wage: "",
-    has_certification: "",
-    short_bio: "",
+    company_name: "",
+    license_number: "",
+    experience_years: "",
+    specialization: "",
+    past_projects: "",
   });
 
-  // Track the files using your exact property names
-  const [experience_document, setExperienceDocument] = useState(null);
-  const [certificates_files, setCertificatesFiles] = useState(null);
-
+  const [licenseDocument, setLicenseDocument] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
+  const [isUpdate, setIsUpdate] = useState(false);
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
-  const location = useLocation();
-  const user = location.state?.user || null;
+
+  useEffect(() => {
+    const fetchExistingProfile = async () => {
+      if (authLoading || !user?.token) return;
+      try {
+        const res = await userService.getContractorProfile(user.token);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.contractor) {
+            const p = data.contractor;
+            setFormData({
+              company_name: p.company_name || "",
+              license_number: p.license_number || "",
+              experience_years: p.experience_years || "",
+              specialization: p.specialization || "",
+              past_projects: p.past_projects || "",
+            });
+            setIsUpdate(true);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching contractor profile:", err);
+      } finally {
+        setFetching(false);
+      }
+    };
+    fetchExistingProfile();
+  }, [user, authLoading]);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setMessage("");
 
     const form = new FormData();
-
-    // Append text fields
     Object.keys(formData).forEach((key) => {
       form.append(key, formData[key]);
     });
 
-    // Append file fields using exact parameter names
-    if (experience_document) {
-      form.append("experience_document", experience_document);
+    if (licenseDocument) {
+      form.append("license_document", licenseDocument);
     }
-    if (certificates_files) {
-      form.append("certificates_files", certificates_files);
-    }
-
     form.append("user_id", user?.user_id);
 
     try {
-      setLoading(true);
-      const res = await userService.workerDetail(form);
+      let res;
+      if (isUpdate) {
+        res = await userService.updateContractorProfile(form, user.token);
+      } else {
+        res = await userService.contractorDetail(form);
+      }
       const data = await res.json();
 
       if (res.ok) {
-        setMessage("Profile submitted successfully");
-        setTimeout(() => {
-          navigate("/login");
-        }, 1000);
+        toast.success(isUpdate ? "Profile updated and resubmitted!" : "Profile created successfully!");
+        setTimeout(() => navigate("/contractor-dashboard"), 1500);
       } else {
         setMessage(data.message || "Submission failed");
+        toast.error(data.message || "Submission failed");
       }
     } catch (err) {
       console.error(err);
-      setMessage("Server error");
+      toast.error("A server error occurred.");
     } finally {
       setLoading(false);
     }
   };
 
+  if (authLoading || fetching) {
+    return (
+      <Container className="vh-100 d-flex justify-content-center align-items-center">
+        <Spinner animation="border" variant="primary" />
+      </Container>
+    );
+  }
+
   return (
     <Container className="mt-5 mb-5">
       <Row className="justify-content-center">
         <Col md={8}>
-          <Card className="shadow p-4">
-            <h4 className="mb-4 text-center">Complete Worker Profile</h4>
+          <Card className="shadow-lg border-0 p-4" style={{ borderRadius: "15px" }}>
+            <h3 className="mb-4 text-center fw-bold text-primary">
+              {isUpdate ? "Update Contractor Profile" : "Complete Contractor Profile"}
+            </h3>
 
-            {message && <Alert variant="info">{message}</Alert>}
+            {message && <Alert variant="danger">{message}</Alert>}
 
             <Form onSubmit={handleSubmit}>
               <Form.Group className="mb-3">
-                <Form.Label>Primary Skill</Form.Label>
+                <Form.Label className="fw-bold">Company Name</Form.Label>
                 <Form.Control
                   type="text"
-                  name="primary_skill"
-                  value={formData.primary_skill}
+                  name="company_name"
+                  value={formData.company_name}
                   onChange={handleChange}
                   required
                 />
               </Form.Group>
 
               <Form.Group className="mb-3">
-                <Form.Label>Other Skills</Form.Label>
+                <Form.Label className="fw-bold">License Number</Form.Label>
                 <Form.Control
                   type="text"
-                  name="other_skills"
-                  value={formData.other_skills}
+                  name="license_number"
+                  value={formData.license_number}
                   onChange={handleChange}
+                  required
                 />
               </Form.Group>
 
               <Row>
-                {/* Left Column for Experience fields */}
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Years of Experience</Form.Label>
+                    <Form.Label className="fw-bold">Experience (Years)</Form.Label>
                     <Form.Control
                       type="number"
-                      name="years_of_experience"
-                      value={formData.years_of_experience}
-                      onChange={handleChange}
-                      required
-                    />
-                  </Form.Group>
-
-                  <Form.Group className="mb-3">
-                    <Form.Label>Experience Document</Form.Label>
-                    <Form.Control
-                      type="file"
-                      onChange={(e) => setExperienceDocument(e.target.files[0])}
-                    />
-                  </Form.Group>
-                </Col>
-
-                {/* Right Column for Skill Level */}
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Skill Level</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="skill_level"
-                      value={formData.skill_level}
+                      name="experience_years"
+                      value={formData.experience_years}
                       onChange={handleChange}
                       required
                     />
                   </Form.Group>
                 </Col>
-              </Row>
-
-              <Row>
                 <Col md={6}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Preferred Work Type</Form.Label>
+                    <Form.Label className="fw-bold">Specialization</Form.Label>
                     <Form.Control
                       type="text"
-                      name="preferred_work_type"
-                      value={formData.preferred_work_type}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Availability</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="availability"
-                      value={formData.availability}
+                      name="specialization"
+                      value={formData.specialization}
                       onChange={handleChange}
                       required
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Preferred Location</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="preferred_location"
-                      value={formData.preferred_location}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Expected Wage</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="expected_wage"
-                      value={formData.expected_wage}
-                      onChange={handleChange}
                     />
                   </Form.Group>
                 </Col>
               </Row>
 
               <Form.Group className="mb-3">
-                <Form.Label>Has Certification</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="has_certification"
-                  value={formData.has_certification}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-
-              <Form.Group className="mb-3">
-                <Form.Label>Certificates Files</Form.Label>
+                <Form.Label className="fw-bold">
+                  License Document {isUpdate && "(Optional if not changing)"}
+                </Form.Label>
                 <Form.Control
                   type="file"
-                  onChange={(e) => setCertificatesFiles(e.target.files[0])}
+                  accept=".pdf"
+                  onChange={(e) => setLicenseDocument(e.target.files[0])}
+                  required={!isUpdate}
                 />
               </Form.Group>
 
               <Form.Group className="mb-4">
-                <Form.Label>Short Bio</Form.Label>
+                <Form.Label className="fw-bold">Past Projects / Track Record</Form.Label>
                 <Form.Control
                   as="textarea"
-                  rows={3}
-                  name="short_bio"
-                  value={formData.short_bio}
+                  rows={4}
+                  name="past_projects"
+                  value={formData.past_projects}
+                  placeholder="Describe your notable projects..."
                   onChange={handleChange}
                 />
               </Form.Group>
 
-              <Button type="submit" className="w-100" disabled={loading}>
-                {loading ? <Spinner size="sm" /> : "Submit Profile"}
+              <Button type="submit" variant="primary" className="w-100 fw-bold py-2 shadow-sm" disabled={loading}>
+                {loading ? <Spinner size="sm" /> : isUpdate ? "Update & Resubmit Profile" : "Create Profile"}
               </Button>
             </Form>
           </Card>
@@ -243,5 +196,3 @@ function WorkerProfile() {
     </Container>
   );
 }
-
-export default WorkerProfile;

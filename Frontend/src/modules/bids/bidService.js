@@ -70,6 +70,19 @@ const selectWinningBid = async (bidId, selectionData, loggedInUserToken) => {
   const response = await apiFetch(`/bids/${id}/select`, requestOpetions);
   return response;
 };
+// the frontend service function that sends updated bid data (multipart/form-data)
+const updateBid = async (bidId, formData, loggedInUserToken) => {
+  const requestOptions = {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${loggedInUserToken}`,
+    },
+    body: formData, // FormData (multipart) — do NOT set Content-Type manually
+  };
+  const response = await apiFetch(`/bids/${bidId}`, requestOptions);
+  return response;
+};
+
 //  export all the function
 const bidService = {
   fetchBids,
@@ -77,5 +90,6 @@ const bidService = {
   submitBid,
   getMyBids,
   selectWinningBid,
+  updateBid,
 };
 export default bidService;

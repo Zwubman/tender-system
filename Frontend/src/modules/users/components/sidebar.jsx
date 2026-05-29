@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Nav, Button, Badge } from "react-bootstrap";
 import { Link, useLocation } from "react-router-dom";
 
-export default function Sidebar({ role }) {
+export default function Sidebar({ role, isRestricted }) {
   const location = useLocation();
   const [showMenu, setShowMenu] = useState(false);
 
@@ -40,7 +40,8 @@ export default function Sidebar({ role }) {
     ],
   };
 
-  const currentMenus = menuItems[role] || [];
+  // If restricted, we hide all navigation items
+  const currentMenus = isRestricted ? [] : (menuItems[role] || []);
 
   // Helper evaluator logic to determine if a menu element represents the active page layout
   const isItemActive = (itemPath) => {

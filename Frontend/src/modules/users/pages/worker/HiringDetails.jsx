@@ -20,7 +20,7 @@ const HiringDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const role = user?.role?.toLowerCase();
+  const role = user?.user_role?.toLowerCase();
   const isContractor = role === "contractor";
   
   const [hiring, setHiring] = useState(null);
@@ -98,7 +98,7 @@ const HiringDetails = () => {
           <h5 className="fw-bold">Error</h5>
           <p>{error || "Hiring request not found."}</p>
           <div className="mt-3">
-            <Button variant="outline-danger" onClick={() => navigate("/notifications")}>Back to Notifications</Button>
+            <Button variant="danger" onClick={() => navigate("/notifications")}>Back</Button>
           </div>
         </Alert>
       </Container>
@@ -113,12 +113,12 @@ const HiringDetails = () => {
     <div className="pb-5" style={{ backgroundColor: "#f4f6fb", minHeight: "100vh", padding: "1.5rem" }}>
       <div className="mb-4">
         <Button 
-          variant="outline-secondary" 
+          variant="danger" 
           size="sm" 
-          className="mb-3 fw-bold px-3 rounded-pill"
+          className="mb-3 fw-bold px-4 rounded-pill d-flex align-items-center gap-2"
           onClick={() => navigate("/notifications")}
         >
-          &larr; Back to Notifications
+          <span>&larr;</span> Back
         </Button>
         <h2 className="fw-bold text-dark">Hiring Request Details</h2>
       </div>
@@ -245,7 +245,7 @@ const HiringDetails = () => {
                     <div className="flex-grow-1">
                       <small className="text-muted d-block text-uppercase fw-bold" style={{fontSize: '0.6rem'}}>Email Address</small>
                       <span className="fw-bold text-dark small" style={{ wordBreak: "break-all" }}>
-                        {isContractor ? (workerUser?.email || "Hidden") : contractor?.User?.email}
+                        {isContractor ? (workerUser?.email || "Hidden") : contractor?.User?.email || "—"}
                       </span>
                     </div>
                   </div>
@@ -257,7 +257,7 @@ const HiringDetails = () => {
                     <div className="flex-grow-1">
                       <small className="text-muted d-block text-uppercase fw-bold" style={{fontSize: '0.6rem'}}>Phone Number</small>
                       <span className="fw-bold text-dark small">
-                        {isContractor ? (workerUser?.phone_number || "Hidden") : contractor?.User?.phone_number}
+                        {isContractor ? (workerUser?.phone_number || "Hidden") : contractor?.User?.phone_number || "—"}
                       </span>
                     </div>
                   </div>
@@ -269,7 +269,7 @@ const HiringDetails = () => {
                     <div className="flex-grow-1">
                       <small className="text-muted d-block text-uppercase fw-bold" style={{fontSize: '0.6rem'}}>Location</small>
                       <span className="fw-bold text-dark small">
-                        {isContractor ? workerProfile?.preferred_location : contractor?.User?.phone_number ? "Registered Office" : "—"}
+                        {isContractor ? workerProfile?.preferred_location : (contractor?.User?.phone_number ? "Registered Office" : "—")}
                       </span>
                     </div>
                   </div>
@@ -285,7 +285,13 @@ const HiringDetails = () => {
                <Button 
                 variant="outline-primary" 
                 className="w-100 rounded-pill fw-bold"
-                onClick={() => navigate(isContractor ? `/workers/${workerProfile.worker_id}` : `/contractors/${contractor.contractor_id}`)}
+                onClick={() => {
+                  if (isContractor && workerProfile?.user_id) {
+                    navigate(`/workers/${workerProfile.user_id}`);
+                  } else if (!isContractor && contractor?.user_id) {
+                    navigate(`/contractors/${contractor.user_id}`);
+                  }
+                }}
                >
                  View Full Profile
                </Button>

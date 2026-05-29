@@ -10,6 +10,7 @@ import {
   Spinner,
 } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 // import the useAuth hook from the context to get the user information and the token
 import { useAuth } from "../../../context/AuthContext";
 // import the tender service to send the post request to create a new tender
@@ -24,7 +25,6 @@ export default function Create_tender() {
     bid_security_requirement_amount: "",
   });
 
-  const [message, setMessage] = useState("");
   const [dataLoading, setDataLoading] = useState(false);
   const navigate = useNavigate();
   // get the token that is stored in the local storage when the user logs in
@@ -43,26 +43,24 @@ export default function Create_tender() {
     e.preventDefault();
 
     setDataLoading(true);
-    setMessage("");
 
     try {
       const res = await tenderService.createTender(formData, loggedInUserToken);
       const data = await res.json();
-      console.log("Create Tender Response Data:", data);
 
       if (res.ok) {
-        setMessage("Tender created successfully");
+        toast.success("Tender created successfully");
 
         // redirect to boq page
         setTimeout(() => {
           navigate(`/tenders/${data.tender.tender_id}/boq`);
         }, 1500);
       } else {
-        setMessage(data.message || "Failed to create tender");
+        toast.error(data.message || "Failed to create tender");
       }
     } catch (error) {
       console.error(error);
-      setMessage("Server error");
+      toast.error("Server error");
     } finally {
       setDataLoading(false);
     }
@@ -74,8 +72,6 @@ export default function Create_tender() {
         <Col md={8}>
           <Card className="shadow-lg p-4">
             <h3 className="text-center mb-4">Create Tender</h3>
-
-            {message && <Alert variant="info">{message}</Alert>}
 
             <Form onSubmit={handleSubmit}>
               {/* Tender Title */}

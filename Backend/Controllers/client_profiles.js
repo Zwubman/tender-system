@@ -216,6 +216,9 @@ export const update_client_profile = async (req, res) => {
       up_to_date.id_certificate_file = `${req.protocol}://${req.get("host")}/${uploadedFile.path.replace(/\\/g, "/")}`;
     }
 
+    up_to_date.verification_status = "pending";
+    up_to_date.suspension_reason = null;
+
     await client_profile.update(up_to_date);
 
     // Re-fetch to get associations if needed

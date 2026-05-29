@@ -40,6 +40,14 @@ const User = sequelize.define(
       type: DataTypes.ENUM("active", "suspended"),
       defaultValue: "active",
     },
+    reset_otp: {
+      type: DataTypes.STRING(10),
+      allowNull: true,
+    },
+    reset_otp_expiry: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     tableName: "users",

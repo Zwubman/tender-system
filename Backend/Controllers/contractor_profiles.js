@@ -169,6 +169,9 @@ export const update_contractor_profile = async (req, res) => {
       )}`;
     }
 
+    up_to_date.verification_status = "pending";
+    up_to_date.suspension_reason = null;
+
     await contractor_profile.update(up_to_date);
 
     // Re-fetch with User details included
@@ -235,5 +238,36 @@ export const get_my_profile = async (req, res) => {
     });
   } catch (error) {
     return res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+// To get contractor profile by user_id
+export const get_contractor_profile_by_id = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const contractor_profile = await ContractorProfile.findOne({
+      where: { user_id: id },
+      include: [{ model: User, attributes: ["full_name", "email", "phone_number", "status"] }],
+    });
+
+    if (!contractor_profile) {
+      return res.status(404).json({
+        success: false,
+        message: "Contractor profile not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      contractor: contractor_profile,
+    });
+  } catch (error) {
+    console.error("Error fetching contractor profile:", error);
+    return res.status(400).json({
+      success: false,
+      message: "Failed to fetch contractor profile",
+      error: error.message,
+    });
   }
 };

@@ -116,7 +116,7 @@ export default function PendingApprovalPage() {
   }
 
   return (
-    <div>
+    <div className="p-4">
       {/* header */}
       <div className="mb-4">
         <h2>Pending Approvals</h2>
@@ -145,6 +145,8 @@ export default function PendingApprovalPage() {
 
                     <th>Role</th>
 
+                    <th>Status</th>
+
                     <th>Submitted</th>
 
                     <th>Action</th>
@@ -162,16 +164,26 @@ export default function PendingApprovalPage() {
                                 align-items-center
                               "
                         >
-                          <img
-                            src={user.profile_image}
-                            alt="profile"
-                            width="45"
-                            height="45"
-                            className="
-                                  rounded-circle
-                                  me-3
-                                "
-                          />
+                          {user.profile_image ? (
+                            <img
+                              src={user.profile_image}
+                              alt="profile"
+                              width="45"
+                              height="45"
+                              className="rounded-circle me-3"
+                            />
+                          ) : (
+                            <div
+                              className="rounded-circle me-3 d-flex align-items-center justify-content-center bg-primary text-white fw-bold"
+                              style={{
+                                width: "45px",
+                                height: "45px",
+                                fontSize: "1.2rem",
+                              }}
+                            >
+                              {user.full_name?.charAt(0).toUpperCase()}
+                            </div>
+                          )}
 
                           <strong>{user.full_name}</strong>
                         </div>
@@ -181,27 +193,32 @@ export default function PendingApprovalPage() {
                       <td>{user.email}</td>
 
                       {/* phone */}
-                      <td>{user.phone}</td>
+                      <td>{user.phone_number}</td>
 
                       {/* role */}
                       <td>
-                        <Badge bg={getRoleVariant(user.user_role)}>
-                          {user.user_role}
+                        <Badge bg={getRoleVariant(user.role)}>
+                          {user.role}
+                        </Badge>
+                      </td>
+
+                      {/* status */}
+                      <td>
+                        <Badge bg="info">
+                          {user.verification_status || user.status || "pending"}
                         </Badge>
                       </td>
 
                       {/* created */}
-                      <td>{user.created_at}</td>
+                      <td>{new Date(user.createdAt).toLocaleDateString()}</td>
 
                       {/* action */}
                       <td>
                         <Button
                           size="sm"
-                          variant="
-                                outline-primary
-                              "
+                          variant="primary"
                           onClick={() =>
-                            navigate(`/admin/pending-users/${user.user_id}`)
+                            navigate(`/admin/pending-approvals/${user.user_id}`)
                           }
                         >
                           View Details
@@ -239,22 +256,32 @@ export default function PendingApprovalPage() {
                             mb-3
                           "
                     >
-                      <img
-                        src={user.profile_image}
-                        alt="profile"
-                        width="60"
-                        height="60"
-                        className="
-                              rounded-circle
-                              me-3
-                            "
-                      />
+                      {user.profile_image ? (
+                        <img
+                          src={user.profile_image}
+                          alt="profile"
+                          width="60"
+                          height="60"
+                          className="rounded-circle me-3"
+                        />
+                      ) : (
+                        <div
+                          className="rounded-circle me-3 d-flex align-items-center justify-content-center bg-primary text-white fw-bold"
+                          style={{
+                            width: "60px",
+                            height: "60px",
+                            fontSize: "1.5rem",
+                          }}
+                        >
+                          {user.full_name?.charAt(0).toUpperCase()}
+                        </div>
+                      )}
 
                       <div>
                         <h5 className="mb-1">{user.full_name}</h5>
 
-                        <Badge bg={getRoleVariant(user.user_role)}>
-                          {user.user_role}
+                        <Badge bg={getRoleVariant(user.role)}>
+                          {user.role}
                         </Badge>
                       </div>
                     </div>
@@ -264,20 +291,25 @@ export default function PendingApprovalPage() {
                     </p>
 
                     <p>
-                      <strong>Phone:</strong> {user.phone}
+                      <strong>Phone:</strong> {user.phone_number}
                     </p>
 
                     <p>
-                      <strong>Submitted:</strong> {user.created_at}
+                      <strong>Status:</strong>{" "}
+                      <Badge bg="info">
+                        {user.verification_status || user.status || "pending"}
+                      </Badge>
+                    </p>
+
+                    <p>
+                      <strong>Submitted:</strong> {new Date(user.createdAt).toLocaleDateString()}
                     </p>
 
                     <Button
-                      variant="
-                            outline-primary
-                          "
+                      variant="primary"
                       className="w-100"
                       onClick={() =>
-                        navigate(`/admin/pending-users/${user.user_id}`)
+                        navigate(`/admin/pending-approvals/${user.user_id}`)
                       }
                     >
                       View Details

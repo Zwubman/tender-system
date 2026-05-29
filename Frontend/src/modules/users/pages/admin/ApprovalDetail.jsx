@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import {
   Row,
   Col,
@@ -11,6 +12,7 @@ import {
   Form,
   ListGroup,
   Container,
+  Modal,
 } from "react-bootstrap";
 
 // Import user service
@@ -28,7 +30,6 @@ export default function ApprovalDetailPage() {
   const [dataLoading, setDataLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
 
   // Rejection UI States
   const [showRejectForm, setShowRejectForm] = useState(false);
@@ -36,6 +37,11 @@ export default function ApprovalDetailPage() {
   // distructure the logged in user token from the useAuth hook
   const { user: AuthUser, loading } = useAuth();
   let loggedInUserToken = !loading ? AuthUser?.token : null;
+  // =========================
+  // Fetch Details
+  // =========================
+  const isPendingView = window.location.pathname.includes("/pending-approvals");
+
   // =========================
   // Fetch Details
   // =========================
@@ -51,7 +57,12 @@ export default function ApprovalDetailPage() {
     const fetchUserDetails = async () => {
       try {
         setDataLoading(true);
-        const res = await userService.getUserDetail(userId, loggedInUserToken);
+        
+        // Dynamic API call based on context
+        const res = isPendingView 
+          ? await userService.getUserDetail(userId, loggedInUserToken)
+          : await userService.getAnyUserDetail(userId, loggedInUserToken);
+          
         const data = await res.json();
 
         if (res.ok) {
@@ -68,7 +79,7 @@ export default function ApprovalDetailPage() {
     };
 
     fetchUserDetails();
-  }, [userId, loggedInUserToken, loading]);
+  }, [userId, loggedInUserToken, loading, isPendingView]);
 
   // =========================
   // Approve User Action
@@ -81,16 +92,16 @@ export default function ApprovalDetailPage() {
       const data = await res.json();
 
       if (res.ok) {
-        setMessage("User approved successfully");
+        toast.success("User verified successfully");
         setTimeout(() => {
-          navigate("/admin/pending-users");
+          navigate("/admin/pending-approvals");
         }, 1500);
       } else {
-        setError(data.message);
+        toast.error(data.message || "Failed to verify user");
       }
     } catch (error) {
       console.error(error);
-      setError("Failed to approve user");
+      toast.error("An error occurred while verifying the user");
     } finally {
       setActionLoading(false);
     }
@@ -120,16 +131,16 @@ export default function ApprovalDetailPage() {
       const data = await res.json();
 
       if (res.ok) {
-        setMessage("User rejected successfully");
+        toast.success("User suspended successfully");
         setTimeout(() => {
-          navigate("/admin/pending-users");
+          navigate("/admin/pending-approvals");
         }, 1500);
       } else {
-        setError(data.message);
+        toast.error(data.message || "Failed to suspend user");
       }
     } catch (error) {
       console.error(error);
-      setError("Failed to reject user");
+      toast.error("An error occurred while suspending the user");
     } finally {
       setActionLoading(false);
     }
@@ -163,15 +174,22 @@ export default function ApprovalDetailPage() {
   }
 
   return (
-    <Container className="py-5">
-      {/* Alert Messages */}
-      {message && (
-        <Alert variant="success" className="mb-4">
-          {message}
-        </Alert>
-      )}
+    <div className="py-5 px-4">
+      {/* Back Button */}
+      <div className="mb-4">
+        <Button
+          variant="danger"
+          size="sm"
+          onClick={() => navigate(isPendingView ? "/admin/pending-approvals" : "/admin/users")}
+          className="d-flex align-items-center gap-2 px-4 shadow-sm fw-bold"
+        >
+          <span>&larr;</span> Back
+        </Button>
+      </div>
+
+      {/* Notification Area */}
       {error && (
-        <Alert variant="danger" className="mb-4">
+        <Alert variant="danger" className="mb-4 shadow-sm border-0">
           {error}
         </Alert>
       )}
@@ -181,39 +199,62 @@ export default function ApprovalDetailPage() {
             LEFT COLUMN: Shared Primary Account Metrics
            ========================================================= */}
         <Col lg={4}>
-          <Card className="shadow-sm mb-4 border-0">
+          <Card className="shadow-sm mb-4 border-0 text-white" style={{ background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)" }}>
             <Card.Body className="text-center">
-              <img
-                src={user.profile_image || "https://via.placeholder.com/150"}
-                alt="profile"
-                width="150"
-                height="150"
-                className="rounded-circle mb-3 object-fit-cover"
-              />
+              {user.profile_image ? (
+                <img
+                  src={user.profile_image}
+                  alt="profile"
+                  width="150"
+                  height="150"
+                  className="rounded-circle mb-3 object-fit-cover border border-3 border-primary"
+                />
+              ) : (
+                <div
+                  className="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center bg-primary text-white fw-bold shadow-lg"
+                  style={{
+                    width: "150px",
+                    height: "150px",
+                    fontSize: "4rem",
+                  }}
+                >
+                  {user.full_name?.charAt(0).toUpperCase()}
+                </div>
+              )}
 
               <h3 className="fw-bold">{user.full_name}</h3>
-              <Badge bg="warning" className="text-capitalize px-3 py-2 mb-3">
-                {user.status}
-              </Badge>
+              <div className="d-flex justify-content-center gap-2 mb-3">
+                <Badge 
+                  bg={user.verification_status === "verified" ? "success" : "warning"} 
+                  className={`${user.verification_status === "verified" ? "text-white" : "text-dark"} text-capitalize px-3 py-2 fw-bold shadow-sm`}
+                >
+                  Verification: {user.verification_status || "Pending"}
+                </Badge>
+                <Badge 
+                  bg={user.status === "active" ? "primary" : "danger"} 
+                  className="text-white text-capitalize px-3 py-2 fw-bold shadow-sm"
+                >
+                  Account: {user.status}
+                </Badge>
+              </div>
 
-              <hr />
+              <hr className="border-secondary mb-4" />
 
-              <ListGroup variant="flush" className="text-start">
-                <ListGroup.Item className="py-2 border-0">
-                  <strong>Email:</strong>
-                  <div className="text-muted">{user.email}</div>
+              <ListGroup variant="flush" className="text-start bg-transparent">
+                <ListGroup.Item className="py-2 border-0 bg-transparent text-white">
+                  <strong className="text-secondary small uppercase d-block">Email</strong>
+                  <div className="">{user.email}</div>
                 </ListGroup.Item>
 
-                <ListGroup.Item className="py-2 border-0">
-                  <strong>Phone:</strong>
-                  <div className="text-muted">{user.phone || "N/A"}</div>
+                <ListGroup.Item className="py-2 border-0 bg-transparent text-white">
+                  <strong className="text-secondary small uppercase d-block">Phone</strong>
+                  <div className="">{user.phone_number || user.phone || "N/A"}</div>
                 </ListGroup.Item>
 
-                <ListGroup.Item className="py-2 border-0">
-                  <strong>Account Role Type:</strong>
-                  <br />
-                  <Badge bg="secondary" className="text-uppercase mt-1">
-                    {user.user_role}
+                <ListGroup.Item className="py-2 border-0 bg-transparent text-white">
+                  <strong className="text-secondary small uppercase d-block">Account Role Type</strong>
+                  <Badge bg="primary" className="text-uppercase mt-1 px-3">
+                    {user.role || user.user_role}
                   </Badge>
                 </ListGroup.Item>
               </ListGroup>
@@ -226,10 +267,11 @@ export default function ApprovalDetailPage() {
            ========================================================= */}
         <Col lg={8}>
           {/* 1. WORKER PROFILE CARD */}
-          {user.user_role === "worker" && user.worker_profile && (
+          {(user.role === "worker" || user.user_role === "worker") && user.worker_profile && (
             <Card className="shadow-sm mb-4 border-0">
               <Card.Body>
-                <h4 className="text-primary mb-3 fw-semibold">
+                <h4 className="text-primary mb-3 fw-semibold d-flex align-items-center gap-2">
+                  <span className="bg-primary rounded-pill p-1" style={{ width: "8px", height: "8px" }}></span>
                   Worker Profile Details
                 </h4>
                 <hr />
@@ -245,7 +287,7 @@ export default function ApprovalDetailPage() {
                     </p>
                     <p>
                       <strong>Years of Experience:</strong>{" "}
-                      {user.worker_profile.years_of_experience || "0"} Years
+                      {user.worker_profile.years_of_experience || user.worker_profile.experience_years || "0"} Years
                     </p>
                     <p>
                       <strong>Skill Level:</strong>{" "}
@@ -281,7 +323,7 @@ export default function ApprovalDetailPage() {
                 </p>
 
                 {user.worker_profile.short_bio && (
-                  <div className="mt-3 p-3 bg-light rounded">
+                  <div className="mt-3 p-3 bg-light rounded border-start border-4 border-primary">
                     <strong className="d-block mb-1">Short Bio:</strong>
                     <span className="text-secondary small">
                       {user.worker_profile.short_bio}
@@ -293,10 +335,11 @@ export default function ApprovalDetailPage() {
           )}
 
           {/* 2. CONTRACTOR PROFILE CARD */}
-          {user.user_role === "contractor" && user.contractor_profile && (
+          {(user.role === "contractor" || user.user_role === "contractor") && user.contractor_profile && (
             <Card className="shadow-sm mb-4 border-0">
               <Card.Body>
-                <h4 className="text-success mb-3 fw-semibold">
+                <h4 className="text-success mb-3 fw-semibold d-flex align-items-center gap-2">
+                   <span className="bg-success rounded-pill p-1" style={{ width: "8px", height: "8px" }}></span>
                   Contractor Profile Details
                 </h4>
                 <hr />
@@ -308,7 +351,7 @@ export default function ApprovalDetailPage() {
                     </p>
                     <p>
                       <strong>License Number:</strong>{" "}
-                      <code>
+                      <code className="text-dark bg-light px-2 py-1 rounded">
                         {user.contractor_profile.license_number || "N/A"}
                       </code>
                     </p>
@@ -316,7 +359,7 @@ export default function ApprovalDetailPage() {
                   <Col md={6}>
                     <p>
                       <strong>Years of Experience:</strong>{" "}
-                      {user.contractor_profile.years_of_experience || "0"} Years
+                      {user.contractor_profile.years_of_experience || user.contractor_profile.experience_years || "0"} Years
                     </p>
                     <p>
                       <strong>Specialization:</strong>{" "}
@@ -327,10 +370,10 @@ export default function ApprovalDetailPage() {
 
                 {user.contractor_profile.past_projects && (
                   <div className="mt-2">
-                    <strong>Past Projects:</strong>
-                    <p className="text-muted small border-start ps-3 mt-1 mb-0">
+                    <strong className="d-block mb-2">Past Projects:</strong>
+                    <div className="p-3 bg-light rounded border-start border-4 border-success small">
                       {user.contractor_profile.past_projects}
-                    </p>
+                    </div>
                   </div>
                 )}
               </Card.Body>
@@ -338,10 +381,11 @@ export default function ApprovalDetailPage() {
           )}
 
           {/* 3. CLIENT PROFILE CARD */}
-          {user.user_role === "client" && user.client_profile && (
+          {(user.role === "client" || user.user_role === "client") && user.client_profile && (
             <Card className="shadow-sm mb-4 border-0">
               <Card.Body>
-                <h4 className="text-info mb-3 fw-semibold">
+                <h4 className="text-info mb-3 fw-semibold d-flex align-items-center gap-2">
+                  <span className="bg-info rounded-pill p-1" style={{ width: "8px", height: "8px" }}></span>
                   Client Profile Details
                 </h4>
                 <hr />
@@ -357,7 +401,7 @@ export default function ApprovalDetailPage() {
                     </p>
                     <p>
                       <strong>Business License Number:</strong>{" "}
-                      <code>
+                      <code className="text-dark bg-light px-2 py-1 rounded">
                         {user.client_profile.business_license_number || "N/A"}
                       </code>
                     </p>
@@ -382,7 +426,7 @@ export default function ApprovalDetailPage() {
                 </Row>
 
                 {user.client_profile.description && (
-                  <div className="mt-2 p-3 bg-light rounded">
+                  <div className="mt-2 p-3 bg-light rounded border-start border-4 border-info">
                     <strong className="d-block mb-1">Description:</strong>
                     <span className="text-secondary small">
                       {user.client_profile.description}
@@ -403,14 +447,15 @@ export default function ApprovalDetailPage() {
                 user.documents.map((doc) => (
                   <div
                     key={doc.document_id}
-                    className="d-flex justify-content-between align-items-center border rounded p-3 mb-2 bg-light shadow-sm"
+                    className="d-flex justify-content-between align-items-center border rounded p-3 mb-2 bg-light shadow-sm transition-all"
+                    style={{ borderLeft: "4px solid #3b82f6 !important" }}
                   >
                     <div>
                       <strong className="text-capitalize">
-                        {doc.type} Attachment Document
+                        {doc.type}
                       </strong>
-                      <div className="text-muted small">
-                        Uploaded on:{" "}
+                      <div className="text-muted small mt-1">
+                         Submitted:{" "}
                         {doc.uploaded_at
                           ? new Date(doc.uploaded_at).toLocaleDateString()
                           : "N/A"}
@@ -420,11 +465,12 @@ export default function ApprovalDetailPage() {
                     {doc.file_url ? (
                       <Button
                         size="sm"
-                        variant="primary"
+                        variant="outline-primary"
                         target="_blank"
                         href={doc.file_url}
+                        className="rounded-pill px-3"
                       >
-                        View File
+                        View Document
                       </Button>
                     ) : (
                       <Badge bg="secondary">No Attached URL</Badge>
@@ -441,71 +487,96 @@ export default function ApprovalDetailPage() {
           </Card>
 
           {/* 5. ADMIN CONTROL DECISION ACTION BLOCK */}
-          <Card className="shadow-sm border-0">
-            <Card.Body>
-              <h4 className="mb-3 fw-semibold">Approval Actions</h4>
-              <hr />
-
-              <div className="d-flex gap-3 mb-3">
-                <Button
-                  variant="success"
-                  size="md"
-                  className="px-4"
-                  disabled={actionLoading}
-                  onClick={handleApprove}
-                >
-                  {actionLoading && !showRejectForm ? (
-                    <Spinner size="sm" className="me-2" />
-                  ) : null}
-                  Approve Registration
-                </Button>
-
-                <Button
-                  variant="danger"
-                  size="md"
-                  className="px-4"
-                  disabled={actionLoading}
-                  onClick={() => setShowRejectForm(!showRejectForm)}
-                >
-                  {showRejectForm ? "Cancel Rejection" : "Reject Registration"}
-                </Button>
-              </div>
-
-              {/* Dynamic Rejection Reasoning Form Block */}
-              {showRejectForm && (
-                <Form
-                  onSubmit={handleRejectSubmit}
-                  className="mt-4 p-3 bg-light rounded border"
-                >
-                  <Form.Group className="mb-3">
-                    <Form.Label className="fw-semibold text-danger">
-                      Reason for Rejection (Required)
-                    </Form.Label>
-                    <Form.Control
-                      as="textarea"
-                      rows={3}
-                      placeholder="Specify the reason why this profile is being rejected..."
-                      value={rejectReason}
-                      onChange={(e) => setRejectReason(e.target.value)}
-                      required
-                    />
-                  </Form.Group>
+          {isPendingView && user.verification_status === "pending" && (
+            <Card className="shadow-sm border-0 bg-light">
+              <Card.Body>
+                <h4 className="mb-3 fw-semibold text-center">Admin Approval Decision</h4>
+                <p className="text-muted text-center small mb-4">Finalize the verification process for this user</p>
+                
+                <div className="d-flex justify-content-center gap-3 mb-3">
                   <Button
-                    type="submit"
-                    variant="danger"
-                    disabled={actionLoading || !rejectReason.trim()}
+                    variant="success"
+                    size="lg"
+                    className="px-5 shadow-sm fw-bold"
+                    disabled={actionLoading}
+                    onClick={handleApprove}
                   >
-                    {actionLoading ? (
-                      <Spinner size="sm" className="me-2" />
+                    {actionLoading && !showRejectForm ? (
+                      <Spinner size="sm" className="me-2" animation="border" />
                     ) : null}
-                    Confirm Permanent Rejection
+                    Approve
                   </Button>
-                </Form>
-              )}
-            </Card.Body>
-          </Card>
+
+                  <Button
+                    variant="outline-danger"
+                    size="lg"
+                    className="px-5 shadow-sm fw-bold"
+                    disabled={actionLoading}
+                    onClick={() => setShowRejectForm(true)}
+                  >
+                    Suspend
+                  </Button>
+                </div>
+              </Card.Body>
+            </Card>
+          )}
         </Col>
       </Row>
-    </Container>
+
+      {/* Suspension Confirmation Dialog (Modal) */}
+      <Modal 
+        show={showRejectForm} 
+        onHide={() => setShowRejectForm(false)}
+        centered
+        backdrop="static"
+      >
+        <Modal.Header closeButton className="border-0">
+          <Modal.Title className="fw-bold text-danger">User Suspension</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="mb-4">
+            <p className="text-secondary small">
+              You are about to suspend <strong>{user.full_name}</strong>. This will restrict their access to the platform.
+            </p>
+          </div>
+          <Form onSubmit={handleRejectSubmit}>
+            <Form.Group className="mb-3">
+              <Form.Label className="fw-bold small">Reason for Suspension</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={4}
+                placeholder="Explain the reason for suspension (this will be recorded in the user's profile)..."
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                required
+                className="bg-light border-0 shadow-none p-3"
+              />
+            </Form.Group>
+            
+            <div className="d-flex gap-2 mt-4">
+              <Button 
+                variant="light" 
+                className="flex-grow-1 fw-semibold" 
+                onClick={() => setShowRejectForm(false)}
+                disabled={actionLoading}
+              >
+                Cancel
+              </Button>
+              <Button 
+                variant="danger" 
+                type="submit" 
+                className="flex-grow-1 fw-bold"
+                disabled={actionLoading || !rejectReason.trim()}
+              >
+                {actionLoading && (
+                  <Spinner size="sm" className="me-2" animation="border" />
+                )}
+                Confirm Suspend
+              </Button>
+            </div>
+          </Form>
+        </Modal.Body>
+      </Modal>
+    </div>
   );
 }

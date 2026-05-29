@@ -29,6 +29,8 @@ import ClientProfile from "./modules/users/pages/client/ClientProfileCreation";
 import Contractor_dashboard from "./modules/users/components/contractor/Contractor_dashboard";
 // impor the contractor profile creation page
 import ContractorProfile from "./modules/users/pages/contractor/ContractorProfileCreation";
+// import the contractor details page
+import ContractorDetail from "./modules/users/pages/contractor/ContractorDetail";
 
 // import the worker pages
 // import the worker dashboard from "./modules/users/pages/worker/Worker_dashboard";
@@ -47,11 +49,15 @@ import TendersPage from "./modules/tenders/components/Tenders.jsx";
 import MyTenders from "./modules/tenders/components/MyTenders";
 // import the tenderDetails page
 import TenderDetails from "./modules/tenders/components/tenderDetails.jsx";
+// import the edit tender page
+import EditTender from "./modules/tenders/components/EditTender";
 // // import the bids pages
 // import the viewSubmittedBids page
 import ViewSubmittedBids from "./modules/bids/components/ViewSubmittedBids.jsx";
 // import the BidDetails page
 import BidDetails from "./modules/bids/components/BidDetails.jsx";
+// import the EditBid page
+import EditBid from "./modules/bids/components/EditBid.jsx";
 // import the worker pages
 import WorkersPage from "./modules/users/pages/worker/WorkersPage.jsx";
 // import the worker details page
@@ -174,10 +180,26 @@ function Router() {
           />
           {/* bid related pages */}
           <Route
+            path="tenders/:id/edit"
+            element={
+              <PrivateAuthRoute roles={["client"]}>
+                <EditTender />
+              </PrivateAuthRoute>
+            }
+          />
+          <Route
             path="tenders/:tenderId/bids"
             element={
               <PrivateAuthRoute roles={["client", "admin"]}>
                 <ViewSubmittedBids />
+              </PrivateAuthRoute>
+            }
+          />
+          <Route
+            path="bids/:bidId/edit"
+            element={
+              <PrivateAuthRoute roles={["contractor"]}>
+                <EditBid />
               </PrivateAuthRoute>
             }
           />
@@ -222,10 +244,26 @@ function Router() {
             }
           />
           <Route
+            path="contractors/:contractorId"
+            element={
+              <PrivateAuthRoute roles={["client", "worker", "admin"]}>
+                <ContractorDetail />
+              </PrivateAuthRoute>
+            }
+          />
+          <Route
             path="admin/users"
             element={
               <PrivateAuthRoute roles={["admin"]}>
                 <Users />
+              </PrivateAuthRoute>
+            }
+          />
+          <Route
+            path="admin/users/:userId"
+            element={
+              <PrivateAuthRoute roles={["admin"]}>
+                <ApprovalDetailPage />
               </PrivateAuthRoute>
             }
           />
@@ -250,6 +288,30 @@ function Router() {
             element={
               <PrivateAuthRoute roles={["admin"]}>
                 <AddAdminPage />
+              </PrivateAuthRoute>
+            }
+          />
+          <Route
+            path="profile"
+            element={
+              <PrivateAuthRoute roles={["client", "contractor", "worker", "admin"]}>
+                <ProfilePage />
+              </PrivateAuthRoute>
+            }
+          />
+          <Route
+            path="notifications"
+            element={
+              <PrivateAuthRoute roles={["contractor", "worker", "admin"]}>
+                <NotificationSwitch />
+              </PrivateAuthRoute>
+            }
+          />
+          <Route
+            path="notifications/:id"
+            element={
+              <PrivateAuthRoute roles={["contractor", "worker", "admin"]}>
+                <HiringDetails />
               </PrivateAuthRoute>
             }
           />

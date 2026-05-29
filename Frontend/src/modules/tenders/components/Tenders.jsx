@@ -10,12 +10,12 @@ import {
   Pagination,
 } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import tenderService from "../tenderService";
 
 export default function TendersPage() {
   const [tenders, setTenders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
   
   // pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -39,11 +39,11 @@ export default function TendersPage() {
         setCurrentPage(data.currentPage || 1);
         setTotalCount(data.totalCount || 0);
       } else {
-        setMessage(data.message || "Failed to load tenders");
+        toast.error(data.message || "Failed to load tenders");
       }
     } catch (error) {
       console.error(error);
-      setMessage("Server error connecting to the procurement service");
+      toast.error("Server error connecting to the procurement service");
     } finally {
       setLoading(false);
     }
@@ -94,19 +94,6 @@ export default function TendersPage() {
             bid submissions.
           </p>
       </div>
-
-      {/* Message Notifications */}
-      {message && (
-        <Alert
-          variant="info"
-          className="shadow-sm border-start border-4 border-info py-3 mb-4"
-        >
-          <div className="d-flex align-items-center">
-            <span className="me-2 fs-5">ℹ</span>
-            <p className="mb-0 fw-semibold">{message}</p>
-          </div>
-        </Alert>
-      )}
 
       {/* Main Container Box for Tenders */}
       <Card className="shadow-sm border-0">

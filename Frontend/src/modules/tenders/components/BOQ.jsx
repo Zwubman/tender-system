@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 // auth context
 import { useAuth } from "../../../context/AuthContext";
@@ -43,9 +44,6 @@ export default function BOQPage() {
 
   // loading
   const [dataLoading, setDataLoading] = useState(false);
-
-  // error message
-  const [message, setMessage] = useState("");
 
   // boq submission status
   const [boqSubmitted, setBoqSubmitted] = useState(false);
@@ -105,7 +103,6 @@ export default function BOQPage() {
 
     setDataLoading(true);
 
-    setMessage("");
     try {
       const res = await tenderService.addBOQItems(
         tenderId,
@@ -115,18 +112,15 @@ export default function BOQPage() {
 
       const data = await res.json();
 
-      // success
       if (res.ok) {
         setBoqSubmitted(true);
-
-        setMessage(data.message || "BOQ added successfully");
+        toast.success(data.message || "BOQ added successfully");
       } else {
-        setMessage(data.message || "Failed to add BOQ");
+        toast.error(data.message || "Failed to add BOQ");
       }
     } catch (error) {
       console.error(error);
-
-      setMessage("Server error");
+      toast.error("Server error");
     } finally {
       setDataLoading(false);
     }
@@ -148,18 +142,17 @@ export default function BOQPage() {
       const data = await res.json();
 
       if (res.ok) {
-        setMessage("Tender published successfully");
+        toast.success("Tender published successfully");
 
         setTimeout(() => {
           navigate("/my-tenders");
         }, 1500);
       } else {
-        setMessage(data.message || "Failed to publish tender");
+        toast.error(data.message || "Failed to publish tender");
       }
     } catch (error) {
       console.error(error);
-
-      setMessage("Server error");
+      toast.error("Server error");
     } finally {
       setDataLoading(false);
     }
@@ -176,9 +169,7 @@ export default function BOQPage() {
           <Card className="shadow-lg p-4">
             <h3 className="text-center mb-4">Structured BOQ</h3>
 
-            {/* message */}
-
-            {message && <Alert variant="info">{message}</Alert>}
+            <h3 className="text-center mb-4">Structured BOQ</h3>
 
             {/* ========================= */}
             {/* SHOW FORM */}

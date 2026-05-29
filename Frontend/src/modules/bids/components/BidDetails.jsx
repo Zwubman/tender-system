@@ -213,9 +213,9 @@ export default function BidDetails() {
           variant="danger" 
           size="sm" 
           onClick={() => isClient ? navigate(`/tenders/${bid.tender_id}/bids`) : navigate("/my-bids")}
-          className="d-flex align-items-center gap-2 px-4"
+          className="d-flex align-items-center gap-2 px-4 rounded-pill fw-bold"
         >
-          <span>&larr;</span> Back to {isClient ? 'Bids List' : 'My Bids'}
+          <span>&larr;</span> Back
         </Button>
       </div>
       

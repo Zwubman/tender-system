@@ -55,6 +55,14 @@ export const create_tender = async (req, res) => {
       });
     }
 
+    const dead_is_past = new Date(deadline) <= new Date();
+    if (dead_is_past) {
+      return res.status(400).json({
+        success: false,
+        message: "Deadline must be a future date.",
+      });
+    }
+
     const new_tender = await Tender.create({
       client_id: client_profile.client_id,
       title,
@@ -94,7 +102,9 @@ export const get_tender_details = async (req, res) => {
     });
 
     if (!tender) {
-      return res.status(404).json({ error: "Tender not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Tender not found." });
     }
 
     const boq_items = await BOQItem.findAll({
@@ -125,7 +135,12 @@ export const get_client_tenders = async (req, res) => {
     const offset = (page - 1) * limit;
 
     if (!client_id) {
-      return res.status(400).json({ error: "client_id query parameter is required." });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "client_id query parameter is required.",
+        });
     }
 
     const client_profile = await ClientProfile.findOne({
@@ -133,13 +148,25 @@ export const get_client_tenders = async (req, res) => {
     });
 
     if (!client_profile) {
-      return res.status(404).json({ error: "Client profile not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Client profile not found." });
     }
 
     const { count, rows: tenders } = await Tender.findAndCountAll({
       where: { client_id: client_profile.client_id },
       limit,
       offset,
+      attributes: {
+        include: [
+          [
+            sequelize.literal(
+              `(SELECT COUNT(*) FROM bids WHERE bids.tender_id = Tender.tender_id)`,
+            ),
+            "bid_count",
+          ],
+        ],
+      },
       include: [
         {
           model: BOQItem,
@@ -189,7 +216,7 @@ export const add_boq_item = async (req, res) => {
     if (boqItemsArray.length === 0) {
       return res.status(400).json({
         success: false,
-        error: "At least one BOQ item is required.",
+        message: "At least one BOQ item is required.",
       });
     }
 
@@ -245,7 +272,9 @@ export const get_tender_boq_items = async (req, res) => {
 
     const tender = await Tender.findByPk(tender_id);
     if (!tender) {
-      return res.status(404).json({ error: "Tender not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Tender not found." });
     }
 
     const boq_items = await BOQItem.findAll({
@@ -350,15 +379,15 @@ export const submit_bid = async (req, res) => {
       });
     }
 
-    const issueDate = new Date(issue_date);
+    const expiryDate = new Date(expiry_date);
     const deadlineDate = new Date(tender.deadline);
 
-    if (issueDate <= deadlineDate) {
+    if (expiryDate <= deadlineDate) {
       await t.rollback();
 
       return res.status(400).json({
         success: false,
-        message: "Bid security issue date must be after tender deadline.",
+        message: "Bid security expiry date must be after tender deadline.",
       });
     }
 
@@ -600,6 +629,15 @@ export const publish_tender = async (req, res) => {
       });
     }
 
+    // Check if deadline is in the past
+    if (new Date(tender.deadline) <= new Date()) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "the deadline is past so you can not publish this tender please update first the deadline of tender",
+      });
+    }
+
     tender.status = "open";
     await tender.save();
 
@@ -628,7 +666,16 @@ export const get_open_tenders = async (req, res) => {
     const { count, rows } = await Tender.findAndCountAll({
       where: { status: "open" },
       limit,
-      offset,
+      attributes: {
+        include: [
+          [
+            sequelize.literal(
+              `(SELECT COUNT(*) FROM bids WHERE bids.tender_id = Tender.tender_id)`,
+            ),
+            "bid_count",
+          ],
+        ],
+      },
       include: [
         {
           model: BOQItem,
@@ -654,7 +701,6 @@ export const get_open_tenders = async (req, res) => {
     });
   }
 };
-
 
 // Delete a tender
 export const delete_tender = async (req, res) => {
@@ -709,6 +755,14 @@ export const update_tender = async (req, res) => {
       });
     }
 
+    const dead_is_past = new Date(deadline) <= new Date();
+    if (dead_is_past) {
+      return res.status(400).json({
+        success: false,
+        message: "Deadline must be a future date.",
+      });
+    }
+
     // FIND CLIENT PROFILE
     const client_profile = await ClientProfile.findOne({
       where: { user_id },
@@ -736,6 +790,13 @@ export const update_tender = async (req, res) => {
       });
     }
 
+    if(tender.status === "closed"){
+      return res.status(400).json({
+        success: false,
+        message: "Closed tenders cannot be updated.",
+      });
+    }
+
     // CHECK IF ANY BID EXISTS
     const existing_bid = await Bid.findOne({
       where: { tender_id },
@@ -756,8 +817,7 @@ export const update_tender = async (req, res) => {
       description: description || tender.description,
       location: location || tender.location,
       bid_security_required_amount:
-        bid_security_requirement_amount ||
-        tender.bid_security_required_amount,
+        bid_security_requirement_amount || tender.bid_security_required_amount,
       deadline: deadline || tender.deadline,
     });
 
@@ -784,7 +844,9 @@ export const get_client_received_bids = async (req, res) => {
 
     const client_profile = await ClientProfile.findOne({ where: { user_id } });
     if (!client_profile) {
-      return res.status(404).json({ success: false, message: "Client profile not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Client profile not found." });
     }
 
     // Collect all tender IDs belonging to this client
@@ -807,7 +869,11 @@ export const get_client_received_bids = async (req, res) => {
     // Build a lookup map for tender info
     const tenderMap = {};
     tenders.forEach((t) => {
-      tenderMap[t.tender_id] = { title: t.title, status: t.status, deadline: t.deadline };
+      tenderMap[t.tender_id] = {
+        title: t.title,
+        status: t.status,
+        deadline: t.deadline,
+      };
     });
 
     // Fetch recent bids across all these tenders
@@ -834,7 +900,8 @@ export const get_client_received_bids = async (req, res) => {
       tender_title: tenderMap[bid.tender_id]?.title || "—",
       tender_status: tenderMap[bid.tender_id]?.status || "—",
       tender_deadline: tenderMap[bid.tender_id]?.deadline,
-      contractor_name: bid.ContractorProfile?.User?.full_name || "Unknown Contractor",
+      contractor_name:
+        bid.ContractorProfile?.User?.full_name || "Unknown Contractor",
       contractor_email: bid.ContractorProfile?.User?.email || null,
       bid_status: bid.status,
       submitted_at: bid.createdAt,
