@@ -9,6 +9,7 @@ import ClientProfile from "../Models/client_profiles.js";
 import User from "../Models/users.js";
 import sequelize from "../Configs/config.js";
 import ContractorProfile from "../Models/contractor_profiles.js";
+import { createAuditLog } from "../Utils/audit_logger.js";
 
 export const create_tender = async (req, res) => {
   try {
@@ -73,6 +74,16 @@ export const create_tender = async (req, res) => {
       status: "draft",
     });
 
+    // Audit log
+    await createAuditLog(
+      user_id,
+      "create",
+      "tender",
+      new_tender.tender_id,
+      `Tender "${title}" created by ${user.email}`,
+      req.ip
+    );
+
     return res.status(201).json({
       success: true,
       message: "Tender created successfully",
@@ -93,6 +104,16 @@ export const get_tender_details = async (req, res) => {
     const tender_id = req.params.id;
 
     const tender = await Tender.findByPk(tender_id, {
+      attributes: {
+        include: [
+          [
+            sequelize.literal(
+              `(SELECT COUNT(*) FROM bids WHERE bids.tender_id = Tender.tender_id)`,
+            ),
+            "bid_count",
+          ],
+        ],
+      },
       include: [
         {
           model: BOQItem,
@@ -358,7 +379,7 @@ export const submit_bid = async (req, res) => {
     }
 
     const tender = await Tender.findOne({
-      where: { tender_id },
+      where: { tender_id, },
     });
 
     if (!tender) {
@@ -370,12 +391,19 @@ export const submit_bid = async (req, res) => {
       });
     }
 
-    if (tender.status !== "open") {
+    if(tender.status !== "open"){
       await t.rollback();
-
       return res.status(400).json({
         success: false,
         message: "Bids can only be submitted to open tenders.",
+      });
+    }
+
+    if(amount < tender.bid_security_required_amount){
+      await t.rollback();
+      return res.status(400).json({
+        success: false,
+        message: "Bid security amount can not be less than required.",
       });
     }
 
@@ -474,6 +502,16 @@ export const submit_bid = async (req, res) => {
     // Commit transaction
     await t.commit();
 
+    // Audit log
+    await createAuditLog(
+      user_id,
+      "submit",
+      "bid",
+      bid.bid_id,
+      `Bid submitted for tender ID ${tender_id} by ${user.email}`,
+      req.ip
+    );
+
     return res.status(201).json({
       success: true,
       message: "Bid submitted successfully",
@@ -557,7 +595,8 @@ export const get_tender_bids = async (req, res) => {
 
         {
           model: BidItem,
-          attributes: ["bid_item_id", "boq_id", "unit_price", "total_price"],
+          as: "BidItems",
+          attributes: ["bid_item_id", "bid_id", "boq_id", "unit_price", "total_price"],
         },
       ],
 
@@ -641,6 +680,16 @@ export const publish_tender = async (req, res) => {
     tender.status = "open";
     await tender.save();
 
+    // Audit log
+    await createAuditLog(
+      req.user.user_id,
+      "publish",
+      "tender",
+      tender.tender_id,
+      `Tender "${tender.title}" published`,
+      req.ip
+    );
+
     return res.status(200).json({
       success: true,
       message: "Tender published successfully",
@@ -682,6 +731,7 @@ export const get_open_tenders = async (req, res) => {
           attributes: ["boq_id", "description", "item_no", "unit", "quantity"],
         },
       ],
+      order: [["createdAt", "DESC"]],
       distinct: true,
     });
 
@@ -716,6 +766,16 @@ export const delete_tender = async (req, res) => {
     }
 
     await tender.destroy();
+
+    // Audit log
+    await createAuditLog(
+      req.user.user_id,
+      "delete",
+      "tender",
+      id,
+      `Tender "${tender.title}" deleted`,
+      req.ip
+    );
 
     return res.status(200).json({
       success: true,
@@ -821,6 +881,16 @@ export const update_tender = async (req, res) => {
       deadline: deadline || tender.deadline,
     });
 
+    // Audit log
+    await createAuditLog(
+      user_id,
+      "update",
+      "tender",
+      tender.tender_id,
+      `Tender "${tender.title}" updated`,
+      req.ip
+    );
+
     return res.status(200).json({
       success: true,
       message: "Tender updated successfully",
@@ -853,6 +923,7 @@ export const get_client_received_bids = async (req, res) => {
     const tenders = await Tender.findAll({
       where: { client_id: client_profile.client_id },
       attributes: ["tender_id", "title", "status", "deadline"],
+      order: [["createdAt", "DESC"]],
     });
 
     const tenderIds = tenders.map((t) => t.tender_id);
@@ -916,5 +987,63 @@ export const get_client_received_bids = async (req, res) => {
   } catch (error) {
     console.error("Error fetching client received bids:", error);
     return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Cancel a tender
+export const cancel_tender = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { cancellation_reason } = req.body;
+
+    if (!cancellation_reason) {
+      return res.status(400).json({
+        success: false,
+        message: "Cancellation reason is required.",
+      });
+    }
+
+    const tender = await Tender.findByPk(id);
+
+    if (!tender) {
+      return res.status(404).json({
+        success: false,
+        message: "Tender not found.",
+      });
+    }
+
+    // Only allow cancellation if tender isn't already awarded or cancelled
+    if (["awarded", "closed", "cancelled"].includes(tender.status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Tender cannot be cancelled in its current state: ${tender.status}`,
+      });
+    }
+
+    tender.status = "cancelled";
+    tender.cancellation_reason = cancellation_reason;
+    await tender.save();
+
+    // Audit log
+    await createAuditLog(
+      req.user.user_id,
+      "cancel",
+      "tender",
+      tender.tender_id,
+      `Tender "${tender.title}" cancelled by ${req.user.email}. Reason: ${cancellation_reason}`,
+      req.ip
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Tender has been successfully cancelled.",
+      tender,
+    });
+  } catch (error) {
+    console.error("Error cancelling tender:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };

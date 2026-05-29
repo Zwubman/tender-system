@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Container,
   Row,
@@ -16,6 +16,12 @@ import { toast } from "react-toastify";
 
 export default function ClientProfile() {
   const { user, loading: authLoading } = useAuth();
+  const location = useLocation();
+  // user data passed from Registration page via navigate state
+  const registeredUser = location.state?.user;
+  // Resolve user_id from auth context (logged in) or from registration state
+  const resolvedUserId = user?.user_id || registeredUser?.user_id;
+
   const [formData, setFormData] = useState({
     organization_name: "",
     organization_type: "",
@@ -40,35 +46,39 @@ export default function ClientProfile() {
 
   useEffect(() => {
     const fetchExistingProfile = async () => {
-      if (authLoading || !user?.token) return;
-      
-      try {
-        const res = await userService.getClientProfile(user.token);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.client) {
-            const p = data.client;
-            setFormData({
-              organization_name: p.organization_name || "",
-              organization_type: p.organization_type || "",
-              license_number: p.license_number || "",
-              tin_number: p.tin_number || "",
-              region: p.region || "",
-              city: p.city || "",
-              sub_city: p.sub_city || "",
-              description: p.description || "",
-            });
-            setIsUpdate(true);
+      // If user is logged in with a token, try to fetch existing profile
+      if (user?.token) {
+        try {
+          const res = await userService.getClientProfile(user.token);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.client) {
+              const p = data.client;
+              setFormData({
+                organization_name: p.organization_name || "",
+                organization_type: p.organization_type || "",
+                license_number: p.license_number || "",
+                tin_number: p.tin_number || "",
+                region: p.region || "",
+                city: p.city || "",
+                sub_city: p.sub_city || "",
+                description: p.description || "",
+              });
+              setIsUpdate(true);
+            }
           }
+        } catch (err) {
+          console.error("Error fetching profile:", err);
         }
-      } catch (err) {
-        console.error("Error fetching profile:", err);
-      } finally {
-        setFetching(false);
       }
+      // Either way, done fetching — show the form
+      setFetching(false);
     };
 
-    fetchExistingProfile();
+    // Wait for auth to finish loading before deciding
+    if (!authLoading) {
+      fetchExistingProfile();
+    }
   }, [user, authLoading]);
 
   const handleChange = (e) => {
@@ -104,7 +114,7 @@ export default function ClientProfile() {
         form.append(isUpdate ? "id_certificate_file" : "id_certificate", files.id_certificate);
       }
       
-      form.append("user_id", user?.user_id);
+      form.append("user_id", resolvedUserId);
 
       let res;
       if (isUpdate) {
@@ -118,7 +128,7 @@ export default function ClientProfile() {
       if (res.ok) {
         toast.success(isUpdate ? "Profile updated and resubmitted!" : "Profile created successfully!");
         setTimeout(() => {
-          navigate("/client-dashboard");
+          navigate(user?.token ? "/client-dashboard" : "/login");
         }, 1500);
       } else {
         setMessage(data.message || "Submission failed");

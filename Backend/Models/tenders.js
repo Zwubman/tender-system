@@ -40,7 +40,7 @@ const Tender = sequelize.define(
       defaultValue: false,
     },
     status: {
-      type: DataTypes.ENUM("draft", "open", "closed", "evaluation", "awarded"),
+      type: DataTypes.ENUM("draft", "open", "closed", "evaluation", "awarded", "cancelled"),
       defaultValue: "draft",
     },
     selected_bid_id: {
@@ -48,6 +48,9 @@ const Tender = sequelize.define(
       allowNull: true,
     },
     selection_reason: {
+      type: DataTypes.TEXT,
+    },
+    cancellation_reason: {
       type: DataTypes.TEXT,
     },
     created_at: {

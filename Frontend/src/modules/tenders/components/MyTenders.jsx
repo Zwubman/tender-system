@@ -10,6 +10,7 @@ import {
   Button,
   Pagination,
   Modal,
+  Form,
 } from "react-bootstrap";
 import { useAuth } from "../../../context/AuthContext";
 import { toast } from "react-toastify";
@@ -25,6 +26,13 @@ export default function MyTenders() {
   const [tenderToPublish, setTenderToPublish] = useState(null);
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState("");
+
+  // Cancellation states
+  const [showCancel, setShowCancel] = useState(false);
+  const [tenderToCancel, setTenderToCancel] = useState(null);
+  const [cancellationReason, setCancellationReason] = useState("");
+  const [cancelError, setCancelError] = useState("");
+  const [cancelling, setCancelling] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -111,6 +119,46 @@ export default function MyTenders() {
       toast.error("Critical Server Error during publication.");
     } finally {
       setPublishing(false);
+    }
+  };
+
+  const handleCancelTender = (tenderId) => {
+    setTenderToCancel(tenderId);
+    setCancellationReason("");
+    setCancelError("");
+    setShowCancel(true);
+  };
+
+  const confirmCancel = async () => {
+    if (!cancellationReason.trim()) {
+      setCancelError("Please provide a reason for cancellation.");
+      return;
+    }
+
+    try {
+      setCancelling(true);
+      const res = await tenderService.cancelTender(
+        tenderToCancel,
+        { cancellation_reason: cancellationReason },
+        loggedInUserToken,
+      );
+      const data = await res.json();
+
+      if (res.ok) {
+        toast.success(data.message || "Tender has been successfully cancelled.");
+        setTenders((prev) =>
+          prev.map((t) =>
+            t.tender_id === tenderToCancel ? { ...t, status: "cancelled" } : t,
+          ),
+        );
+        setShowCancel(false);
+      } else {
+        toast.error(data.message || "Failed to cancel tender.");
+      }
+    } catch (error) {
+      toast.error("Critical Server Error during cancellation.");
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -299,14 +347,24 @@ export default function MyTenders() {
                           </Button>
                         </div>
                         {(tender.status === "open" ||
-                          tender.status === "published") && (
-                          <Button
-                            variant="outline-primary"
-                            className="w-100 fw-bold"
-                            href={`/tenders/${tender.tender_id}/bids`}
-                          >
-                            View Bids ({tender.bid_count || 0})
-                          </Button>
+                          tender.status === "published" ||
+                          tender.bid_count > 0) && (
+                          <div className="d-flex gap-2">
+                             <Button
+                              variant="outline-primary"
+                              className="flex-grow-1 fw-bold"
+                              href={`/tenders/${tender.tender_id}/bids`}
+                            >
+                              View Bids ({tender.bid_count || 0})
+                            </Button>
+                            <Button
+                              variant="outline-danger"
+                              className="flex-shrink-0"
+                              onClick={() => handleCancelTender(tender.tender_id)}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
                         )}
                       </div>
                     )}
@@ -372,6 +430,62 @@ export default function MyTenders() {
               )}
             </Button>
           )}
+        </Modal.Footer>
+      </Modal>
+
+      {/* Cancellation Modal */}
+      <Modal show={showCancel} onHide={() => !cancelling && setShowCancel(false)} centered>
+        <Modal.Header closeButton={!cancelling} className="border-0 pb-0">
+          <Modal.Title className="fw-bold text-danger">Cancel Tender</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="py-4">
+          <p className="text-secondary mb-3">
+            Are you sure you want to terminate this tender? This action will mark the tender as cancelled and contractors will no longer be able to submit bids.
+          </p>
+          <Form.Group>
+            <Form.Label className="small fw-bold text-muted text-uppercase">Reason for Cancellation</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={3}
+              placeholder="Explain why this tender is being cancelled..."
+              value={cancellationReason}
+              onChange={(e) => {
+                setCancellationReason(e.target.value);
+                if (e.target.value.trim()) setCancelError("");
+              }}
+              className={cancelError ? "is-invalid" : ""}
+            />
+            {cancelError && (
+              <div className="text-danger small mt-1 fw-bold">
+                {cancelError}
+              </div>
+            )}
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer className="border-0 pt-0">
+          <Button 
+            variant="outline-secondary" 
+            onClick={() => setShowCancel(false)} 
+            disabled={cancelling}
+            className="px-4 rounded-pill"
+          >
+            Go Back
+          </Button>
+          <Button 
+            variant="danger" 
+            onClick={confirmCancel} 
+            disabled={cancelling}
+            className="px-4 rounded-pill fw-bold shadow-sm"
+          >
+            {cancelling ? (
+              <>
+                <Spinner size="sm" className="me-2" />
+                Processing...
+              </>
+            ) : (
+              "Confirm Cancellation"
+            )}
+          </Button>
         </Modal.Footer>
       </Modal>
 

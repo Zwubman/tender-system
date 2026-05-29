@@ -131,6 +131,7 @@ export const get_all_worker_profiles = async (req, res) => {
         },
       ],
       distinct: true, // required for findAndCountAll with includes
+      order: [["createdAt", "DESC"]],
     });
 
     return res.status(200).json({

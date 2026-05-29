@@ -34,6 +34,7 @@ import adminRoutes from "./Routes/admin.js";
 import workerHiringRoutes from "./Routes/worker_hiring.js";
 import boqItemRoutes from "./Routes/boq_items.js";
 import userRoutes from "./Routes/users.js";
+import auditLogRoutes from "./Routes/audit_logs.js";
 import { startTenderDeadlineChecker } from "./Utils/cron_jobs.js";
 
 dotenv.config();
@@ -64,6 +65,7 @@ app.use("/admin", adminRoutes);
 app.use("/hiring", workerHiringRoutes);
 app.use("/boq-items", boqItemRoutes);
 app.use("/users", userRoutes);
+app.use("/audit-logs", auditLogRoutes);
 const startServer = async () => {
   try {
     await sequelize.authenticate();

@@ -9,6 +9,7 @@ import TechnicalProposal from "../Models/technical_proposals.js";
 import BidSecurity from "../Models/bid_securities.js";
 import BidItem from "../Models/bid_items.js";
 import BOQItem from "../Models/boq_items.js";
+import { createAuditLog } from "../Utils/audit_logger.js";
 
 //Get the detail information of the specific bid that submitted to the tender
 export const get_bid_details = async (req, res) => {
@@ -22,6 +23,8 @@ export const get_bid_details = async (req, res) => {
       include: [
         {
           model: ContractorProfile,
+          attributes: ["contractor_id", "user_id"],
+
           include: [
             {
               model: User,
@@ -61,7 +64,14 @@ export const get_bid_details = async (req, res) => {
 
         {
           model: BidItem,
-          attributes: ["bid_item_id", "boq_id", "unit_price", "total_price"],
+          as: "BidItems",
+          attributes: [
+            "bid_item_id",
+            "bid_id",
+            "boq_id",
+            "unit_price",
+            "total_price",
+          ],
 
           include: [
             {
@@ -81,33 +91,76 @@ export const get_bid_details = async (req, res) => {
       });
     }
 
-    // Check financial visibility
-    const financial_visible = new Date() > new Date(bid.Tender.deadline);
+    // Current logged in user role
+    const userRole = (
+      req.user.role ||
+      req.user.user_role ||
+      ""
+    ).toLowerCase();
 
-    // Format response
+    // Deadline check
+    const isDeadlinePassed =
+      new Date() > new Date(bid.Tender?.deadline);
+
+    // FIXED OWNER CHECK
+    const isOwner =
+      Number(req.user.user_id) ===
+      Number(bid.ContractorProfile?.user_id);
+
+    // Role checks
+    const isClient = userRole === "client";
+
+    const isAdmin = userRole === "admin";
+
+    /**
+     * Visibility Rules
+     *
+     * Contractor owner -> ALWAYS visible
+     * Admin -> ALWAYS visible
+     * Client -> only after deadline
+     */
+
+    const financial_visible =
+      isOwner ||
+      isAdmin ||
+      (isClient && isDeadlinePassed);
+
+    // Bid items
+    const bidItems = bid.BidItems || [];
+
+    // Response
     const formattedBid = {
       bid_id: bid.bid_id,
+
       tender_id: bid.tender_id,
+
       status: bid.status,
 
-      contractor_name: bid.ContractorProfile.User?.full_name || null,
+      contractor_name:
+        bid.ContractorProfile?.User?.full_name || null,
 
-      contractor_email: bid.ContractorProfile.User?.email || null,
+      contractor_email:
+        bid.ContractorProfile?.User?.email || null,
 
-      contractor_phone: bid.ContractorProfile.User?.phone_number || null,
+      contractor_phone:
+        bid.ContractorProfile?.User?.phone_number || null,
 
-      technical_proposal: bid.TechnicalProposal,
+      technical_proposal: bid.TechnicalProposal || null,
 
-      bid_security: bid.BidSecurity,
+      bid_security: bid.BidSecurity || null,
+
       financial_visible,
 
       financial_proposal: financial_visible
-        ? bid.BidItems.map((item) => ({
+        ? bidItems.map((item) => ({
             bid_item_id: item.bid_item_id,
+
+            boq_id: item.boq_id,
 
             item_no: item.BOQItem?.item_no || null,
 
-            description: item.BOQItem?.description || null,
+            description:
+              item.BOQItem?.description || null,
 
             unit_price: item.unit_price,
 
@@ -531,6 +584,22 @@ export const select_bid = async (req, res) => {
     });
 
     await bid.update({ status: "accepted" });
+
+    // Fetch contractor info for better log description
+    const selectedContractor = await ContractorProfile.findByPk(bid.contractor_id, {
+      include: [{ model: User, attributes: ["full_name"] }]
+    });
+    const contractorName = selectedContractor?.User?.full_name || `Contractor ID: ${bid.contractor_id}`;
+
+    // Audit log
+    await createAuditLog(
+      req.user.user_id,
+      "award",
+      "tender",
+      tender.tender_id,
+      `Tender "${tender.title}" awarded to ${contractorName}. Selection Reason: ${selection_reason}`,
+      req.ip
+    );
 
     return res.status(200).json({
       success: true,

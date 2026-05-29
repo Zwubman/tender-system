@@ -28,7 +28,7 @@ export const create_role = async (req, res) => {
 
 export const get_all_roles = async (req, res) => {
   try {
-    const roles = await Role.findAll();
+    const roles = await Role.findAll({order: [["createdAt", "DESC"]],});
     res
       .status(200)
       .json({

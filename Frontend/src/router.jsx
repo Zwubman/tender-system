@@ -70,6 +70,7 @@ import PendingApprovalPage from "./modules/users/pages/admin/PendingApproval.jsx
 import ApprovalDetailPage from "./modules/users/pages/admin/ApprovalDetail.jsx";
 // import the page that allow the admin to add other admins to the system
 import AddAdminPage from "./modules/users/pages/admin/AddAdminPage.jsx";
+import AuditLogs from "./modules/users/pages/admin/AuditLogs.jsx";
 // import the submitBid page
 import SubmitBidPage from "./modules/bids/components/SubmitBid.jsx";
 // import the ViewSubmittedBids page that allow the contractors to see their submitted bids
@@ -288,6 +289,14 @@ function Router() {
             element={
               <PrivateAuthRoute roles={["admin"]}>
                 <AddAdminPage />
+              </PrivateAuthRoute>
+            }
+          />
+          <Route
+            path="admin/audit-logs"
+            element={
+              <PrivateAuthRoute roles={["admin"]}>
+                <AuditLogs />
               </PrivateAuthRoute>
             }
           />

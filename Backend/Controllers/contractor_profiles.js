@@ -101,7 +101,7 @@ export const get_contractor_profile = async (req, res) => {
 
 export const get_all_contractor_profiles = async (req, res) => {
   try {
-    const contractor_profiles = await ContractorProfile.findAll();
+    const contractor_profiles = await ContractorProfile.findAll({order: [["createdAt", "DESC"]],});
 
     return res.status(200).json({
       success: true,

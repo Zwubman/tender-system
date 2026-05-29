@@ -15,6 +15,7 @@ export default function Sidebar({ role, isRestricted }) {
       { name: "All Tenders", path: "/tenders" },
       { name: "All Bids", path: "/bids" },
       { name: "Add Admin", path: "/admin/add-admin" },
+      { name: "Audit Logs", path: "/admin/audit-logs" },
     ],
 
     client: [

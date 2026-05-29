@@ -12,6 +12,7 @@ import {
   generateAccessToken,
   generateRefreshToken,
 } from "../Utils/generate_tokens.js";
+import { createAuditLog } from "../Utils/audit_logger.js";
 
 dotenv.config();
 
@@ -83,6 +84,16 @@ export const register = async (req, res) => {
 
     //  COMMIT
     await t.commit();
+
+    // Audit log
+    await createAuditLog(
+      user.user_id,
+      "register",
+      "user",
+      user.user_id,
+      `User ${user.email} registered with role ${role}`,
+      req.ip
+    );
 
     return res.status(201).json({
       success: true,
@@ -196,6 +207,16 @@ export const login = async (req, res) => {
     const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(payload);
 
+    // Audit log
+    await createAuditLog(
+      user.user_id,
+      "login",
+      "user",
+      user.user_id,
+      `User ${user.email} logged in successfully`,
+      req.ip
+    );
+
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -219,6 +240,9 @@ export const login = async (req, res) => {
       },
     });
   } catch (error) {
+    // Audit log failed login
+    console.error("Login attempt failed:", error.message);
+    
     return res.status(400).json({
       success: false,
       message: error.message,

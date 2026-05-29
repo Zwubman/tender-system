@@ -8,6 +8,7 @@ import WorkerProfile from "../Models/worker_profiles.js";
 import Role from "../Models/roles.js";
 import Tender from "../Models/tenders.js";
 import Bid from "../Models/bids.js";
+import { createAuditLog } from "../Utils/audit_logger.js";
 
 // To retrieve all users (for admin dashboard)
 
@@ -36,6 +37,7 @@ export const get_all_users = async (req, res) => {
     const users = await User.findAll({
       where: whereClause,
       include: [includeRole],
+      order: [["createdAt", "DESC"]],
     });
 
     const formattedUsers = users.map((user) => {
@@ -145,12 +147,17 @@ export const verify_user = async (req, res) => {
 
       client_profile.verification_status = "verified";
       await client_profile.save();
-    } else {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid user role.",
-      });
     }
+
+    // Audit log
+    await createAuditLog(
+      req.user.user_id,
+      "verify",
+      "user",
+      user.user_id,
+      `${role.name.charAt(0).toUpperCase() + role.name.slice(1)} profile for ${user.email} verified by ${req.user.email}`,
+      req.ip
+    );
 
     return res.status(200).json({
       success: true,
@@ -244,12 +251,17 @@ export const suspend_user = async (req, res) => {
       client_profile.verification_status = "suspended";
       if (reason) client_profile.suspension_reason = reason;
       await client_profile.save();
-    } else {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid user role for suspension.",
-      });
     }
+
+    // Audit log
+    await createAuditLog(
+      req.user.user_id,
+      "suspend",
+      "user",
+      user.user_id,
+      `User ${user.email} (role: ${role.name}) suspended by ${req.user.email}. Reason: ${reason || "No reason provided"}`,
+      req.ip
+    );
 
     return res.status(200).json({
       success: true,
@@ -712,6 +724,16 @@ export const add_admin = async (req, res) => {
       user_id: newUser.user_id,
       role_id: adminRole.role_id,
     });
+
+    // Audit log
+    await createAuditLog(
+      req.user.user_id,
+      "create_admin",
+      "user",
+      newUser.user_id,
+      `New admin created: ${newUser.email} by ${req.user.email}`,
+      req.ip
+    );
 
     return res.status(201).json({
       success: true,

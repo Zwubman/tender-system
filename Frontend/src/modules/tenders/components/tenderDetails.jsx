@@ -293,7 +293,8 @@ export default function TenderDetails() {
                     )}
 
                     {(tender.status === "open" ||
-                      tender.status === "published") && (
+                      tender.status === "published" ||
+                      tender.bid_count > 0) && (
                       <Button
                         variant="primary"
                         className="fw-bold py-2 shadow-sm"

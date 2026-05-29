@@ -60,6 +60,7 @@ Bid.belongsTo(ContractorProfile, {
 Bid.hasMany(BidItem, {
   foreignKey: "bid_id",
   onDelete: "CASCADE",
+  as: "BidItems",
 });
 
 BidItem.belongsTo(Bid, {

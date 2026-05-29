@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Container, Row, Col, Form, Button, Card } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import "./Registration.css";
+import { toast } from "react-toastify";
 import authService from "../authService";
 // the component for the registration page
 export default function Registration() {
@@ -66,7 +67,7 @@ export default function Registration() {
       const data = await res.json();
 
       if (res.ok) {
-        alert("Registration successful");
+        toast.success("Registration successful");
 
         if (formData.role === "client") {
           navigate("/client-profile", { state: { user: data.user } });
@@ -80,7 +81,7 @@ export default function Registration() {
       }
     } catch (err) {
       console.error(err);
-      alert("Server error");
+      toast.error("Server error");
     }
   };
 

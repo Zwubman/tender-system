@@ -1,12 +1,18 @@
 import { useState, useEffect } from "react";
 import { Container, Form, Button, Row, Col, Card, Spinner, Alert } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import userService from "../../userService";
 import { useAuth } from "../../../../context/AuthContext";
 import { toast } from "react-toastify";
 
 export default function ContractorProfileCreation() {
   const { user, loading: authLoading } = useAuth();
+  const location = useLocation();
+  // user data passed from Registration page via navigate state
+  const registeredUser = location.state?.user;
+  // Resolve user_id from auth context (logged in) or from registration state
+  const resolvedUserId = user?.user_id || registeredUser?.user_id;
+
   const [formData, setFormData] = useState({
     company_name: "",
     license_number: "",
@@ -24,30 +30,36 @@ export default function ContractorProfileCreation() {
 
   useEffect(() => {
     const fetchExistingProfile = async () => {
-      if (authLoading || !user?.token) return;
-      try {
-        const res = await userService.getContractorProfile(user.token);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.contractor) {
-            const p = data.contractor;
-            setFormData({
-              company_name: p.company_name || "",
-              license_number: p.license_number || "",
-              experience_years: p.experience_years || "",
-              specialization: p.specialization || "",
-              past_projects: p.past_projects || "",
-            });
-            setIsUpdate(true);
+      // If user is logged in with a token, try to fetch existing profile
+      if (user?.token) {
+        try {
+          const res = await userService.getContractorProfile(user.token);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.contractor) {
+              const p = data.contractor;
+              setFormData({
+                company_name: p.company_name || "",
+                license_number: p.license_number || "",
+                experience_years: p.experience_years || "",
+                specialization: p.specialization || "",
+                past_projects: p.past_projects || "",
+              });
+              setIsUpdate(true);
+            }
           }
+        } catch (err) {
+          console.error("Error fetching contractor profile:", err);
         }
-      } catch (err) {
-        console.error("Error fetching contractor profile:", err);
-      } finally {
-        setFetching(false);
       }
+      // Either way, done fetching — show the form
+      setFetching(false);
     };
-    fetchExistingProfile();
+
+    // Wait for auth to finish loading before deciding
+    if (!authLoading) {
+      fetchExistingProfile();
+    }
   }, [user, authLoading]);
 
   const handleChange = (e) => {
@@ -67,7 +79,7 @@ export default function ContractorProfileCreation() {
     if (licenseDocument) {
       form.append("license_document", licenseDocument);
     }
-    form.append("user_id", user?.user_id);
+    form.append("user_id", resolvedUserId);
 
     try {
       let res;
@@ -80,7 +92,7 @@ export default function ContractorProfileCreation() {
 
       if (res.ok) {
         toast.success(isUpdate ? "Profile updated and resubmitted!" : "Profile created successfully!");
-        setTimeout(() => navigate("/contractor-dashboard"), 1500);
+        setTimeout(() => navigate(user?.token ? "/contractor-dashboard" : "/login"), 1500);
       } else {
         setMessage(data.message || "Submission failed");
         toast.error(data.message || "Submission failed");

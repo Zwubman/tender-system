@@ -150,7 +150,7 @@ export const get_client_profile = async (req, res) => {
 
 export const get_all_client_profiles = async (req, res) => {
   try {
-    const client_profiles = await ClientProfile.findAll();
+    const client_profiles = await ClientProfile.findAll({order: [["createdAt", "DESC"]],});
 
     return res.status(200).json({
       success: true,

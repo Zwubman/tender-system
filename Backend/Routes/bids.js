@@ -12,7 +12,7 @@ import upload from "../Middlewares/upload.js";
 const router = express.Router();
 
 router.get("/", get_contractor_bids);
-router.get("/:id", get_bid_details);
+router.get("/:id", authenticate, get_bid_details);
 router.put(
   "/:id",
   authenticate,
